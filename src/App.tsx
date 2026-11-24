@@ -21,6 +21,8 @@ import UsersPage from './pages/users/UsersPage';
 import UserAddPage from './pages/users/UserAddPage';
 import UserEditPage from './pages/users/UserEditPage';
 import UserProfilePage from './pages/users/UserProfilePage';
+import ReferralPage from './pages/referral/ReferralPage';
+import DiscountsPage from './pages/discounts/DiscountsPage';
 import OrdersPage from './pages/orders/OrdersPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import PermissionsPage from './pages/permissions/PermissionsPage';
@@ -225,6 +227,14 @@ export default function App() {
                 }
               />
               <Route
+                path="referral"
+                element={
+                  <PermissionGuard permission={PERMISSIONS.USERS_VIEW}>
+                    <ReferralPage />
+                  </PermissionGuard>
+                }
+              />
+              <Route
                 path="orders"
                 element={
                   <PermissionGuard
@@ -251,7 +261,7 @@ export default function App() {
                   </PermissionGuard>
                 }
               />
-              <Route
+<Route
                 path="delivery"
                 element={
                   <PermissionGuard permission={[
@@ -260,9 +270,23 @@ export default function App() {
                     PERMISSIONS.DELIVERY_UPDATE,
                     PERMISSIONS.DELIVERY_DELETE,
                   ]}
-                >
-                  <DeliveryPage />
-                </PermissionGuard>
+                  >
+                    <DeliveryPage />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="discounts"
+                element={
+                  <PermissionGuard permission={[
+                    PERMISSIONS.PRODUCTS_VIEW,
+                    PERMISSIONS.PRODUCTS_CREATE,
+                    PERMISSIONS.PRODUCTS_UPDATE,
+                    PERMISSIONS.PRODUCTS_DELETE,
+                  ]}
+                  >
+                    <DiscountsPage />
+                  </PermissionGuard>
                 }
               />
               <Route path="permissions" element={<PermissionsPage />} />
