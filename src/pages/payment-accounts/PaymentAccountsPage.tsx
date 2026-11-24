@@ -73,11 +73,11 @@ export default function PaymentAccountsPage() {
     queryKey: ['payment-accounts'],
     queryFn: async () => {
       const res = await api.get('/payment-accounts');
-      return res.data;
+      return (res.data?.data ?? res.data ?? []) as PaymentAccount[];
     },
   });
 
-  const accounts: PaymentAccount[] = data ?? [];
+  const accounts: PaymentAccount[] = Array.isArray(data) ? data : [];
 
   const createMutation = useMutation({
     mutationFn: async (payload: {
@@ -174,7 +174,7 @@ export default function PaymentAccountsPage() {
         sortOrder: '0',
       });
     }
-  }, [editingId, accounts]);
+  }, [editingId]);
 
   const columns: Column<PaymentAccount>[] = useMemo(
     () => [

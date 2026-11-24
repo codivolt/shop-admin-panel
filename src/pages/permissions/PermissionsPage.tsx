@@ -71,19 +71,19 @@ export default function PermissionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  const permissionsQuery = useQuery({
+  const permissionsQuery = useQuery<Permission[]>({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const res = await api.get<Permission[]>('/permissions');
-      return res.data;
+      const res = await api.get('/permissions');
+      return (res.data?.data ?? res.data ?? []) as Permission[];
     },
   });
 
-  const rolesQuery = useQuery({
+  const rolesQuery = useQuery<RolePermissions>({
     queryKey: ['permissions', 'roles'],
     queryFn: async () => {
-      const res = await api.get<RolePermissions>('/permissions/roles');
-      return res.data;
+      const res = await api.get('/permissions/roles');
+      return (res.data?.data ?? res.data ?? {}) as RolePermissions;
     },
   });
 
@@ -104,6 +104,7 @@ export default function PermissionsPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, Permission[]>();
     for (const permission of permissions) {
+      if (!permission.key) continue;
       const group = permission.key.split('.')[0];
       const list = map.get(group) ?? [];
       list.push(permission);

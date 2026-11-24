@@ -13,6 +13,9 @@ export type InputProps<T extends object = any> = {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   maxLength?: number;
   error?: string;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
 };
 
 export default function Input<T extends object = any>({
@@ -28,6 +31,9 @@ export default function Input<T extends object = any>({
   onChange,
   maxLength,
   error: errorProp,
+  min,
+  max,
+  step,
 }: InputProps<T>) {
   const fieldError = methods ? (methods.formState as any).errors?.[name as string] : undefined;
   const error = fieldError ?? (errorProp ? { message: errorProp } : undefined);
@@ -42,6 +48,9 @@ export default function Input<T extends object = any>({
       <input
         type={type}
         maxLength={maxLength}
+        min={min}
+        max={max}
+        step={step}
         {...(methods
           ? {
               ...methods.register(name as FieldPath<T>, {

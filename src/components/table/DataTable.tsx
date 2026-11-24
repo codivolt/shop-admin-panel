@@ -83,7 +83,7 @@ export default function DataTable<T>({
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const filteredData = useMemo(() => {
-    if (!data) return [];
+    if (!Array.isArray(data)) return [];
     if (!searchTerm) return data;
     const term = searchTerm.toLowerCase();
     return data.filter((row) =>

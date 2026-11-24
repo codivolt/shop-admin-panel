@@ -14,6 +14,7 @@ import CategoriesWizardPage from './pages/categories-add/CategoriesWizardPage';
 import ProductsPage from './pages/products/ProductsPage';
 import ProductAddPage from './pages/products/ProductAddPage';
 import ProductEditPage from './pages/products/ProductEditPage';
+import FeaturedProductsPage from './pages/products/FeaturedProductsPage';
 import BrandsPage from './pages/brands/BrandsPage';
 import BrandAddPage from './pages/brands/BrandAddPage';
 import BrandEditPage from './pages/brands/BrandEditPage';
@@ -99,6 +100,19 @@ export default function App() {
                     ]}
                   >
                     <ProductsPage />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="featured-products"
+                element={
+                  <PermissionGuard
+                    permission={[
+                      PERMISSIONS.PRODUCTS_VIEW,
+                      PERMISSIONS.PRODUCTS_UPDATE,
+                    ]}
+                  >
+                    <FeaturedProductsPage />
                   </PermissionGuard>
                 }
               />

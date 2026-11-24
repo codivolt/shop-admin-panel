@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 
+import { getAbsoluteImageUrl } from '../../lib/image';
 const categorySchema = z.object({
   name: z.string().min(1, 'نام دسته‌بندی الزامی است'),
   description: z.string().optional(),
@@ -26,6 +27,7 @@ interface Category {
   description: string | null;
   parentId: string | null;
   isActive: boolean;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,6 +137,50 @@ export default function CategoriesWizardPage() {
     { id: Date.now().toString(), name: '', type: 'select', options: [], isRequired: false, sortOrder: 0 },
   ]);
 
+  const [categoryImagePreview, setCategoryImagePreview] = useState<string | null>(null);
+  const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
+  const [categoryImageUploading, setCategoryImageUploading] = useState(false);
+
+  const uploadCategoryImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/categories/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data.imageUrl;
+    },
+    onSuccess: (url) => {
+      const absoluteUrl = getAbsoluteImageUrl(url);
+      setCategoryImagePreview(absoluteUrl);
+      setCategoryImageUploading(false);
+      toast.success('تصویر دسته‌بندی آپلود شد');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
+      setCategoryImageFile(null);
+      setCategoryImagePreview(null);
+      setCategoryImageUploading(false);
+    },
+  });
+
+  const handleCategoryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('لطفاً یک فایل تصویر انتخاب کنید');
+      return;
+    }
+    setCategoryImageFile(file);
+    setCategoryImageUploading(true);
+    uploadCategoryImageMutation.mutate(file);
+  };
+
+  const removeCategoryImage = () => {
+    setCategoryImageFile(null);
+    setCategoryImagePreview(null);
+  };
+
   const addAttribute = () => {
     setAttributes((prev) => [
       ...prev,
@@ -194,6 +240,9 @@ export default function CategoriesWizardPage() {
         reset({ name: cat.name, description: cat.description || '', isActive: cat.isActive });
         setCreatedCategoryId(cat.id);
         setStep(1);
+        if (cat.imageUrl) {
+          setCategoryImagePreview(getAbsoluteImageUrl(cat.imageUrl));
+        }
       });
 
       api
@@ -218,12 +267,22 @@ export default function CategoriesWizardPage() {
   }, [isEdit, id]);
 
   const createCategoryMutation = useMutation({
-    mutationFn: async (data: CategoryFormData) => {
+    mutationFn: async (data: CategoryFormData & { imageUrl?: string }) => {
+      const payload = { ...data };
+      if (categoryImagePreview) {
+        // Extract the relative URL from the absolute preview URL
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        if (categoryImagePreview.startsWith(apiUrl)) {
+          payload.imageUrl = categoryImagePreview.replace(apiUrl, '');
+        } else {
+          payload.imageUrl = categoryImagePreview;
+        }
+      }
       if (isEdit && id) {
-        const res = await api.put(`/categories/${id}`, data);
+        const res = await api.put(`/categories/${id}`, payload);
         return res.data;
       }
-      const res = await api.post('/categories', data);
+      const res = await api.post('/categories', payload);
       return res.data;
     },
     onSuccess: (newCategory) => {
@@ -385,6 +444,67 @@ export default function CategoriesWizardPage() {
                 {errors.description && (
                   <p className="text-xs font-medium text-[#f87171]">{errors.description.message}</p>
                 )}
+              </div>
+
+              {/* Category Image Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-fg">تصویر دسته‌بندی</h3>
+                  {categoryImageFile && (
+                    <Button variant="outline" size="sm" onClick={removeCategoryImage} disabled={categoryImageUploading}>
+                      حذف تصویر
+                    </Button>
+                  )}
+                </div>
+                <div
+                  className={`relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-all ${
+                    categoryImageFile || categoryImagePreview
+                      ? 'border-primary/50 bg-primary/5'
+                      : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
+                  } cursor-pointer`}
+                  onClick={() => document.getElementById('category-image-input')?.click()}
+                >
+                  <input
+                    id="category-image-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCategoryImageChange}
+                    className="hidden"
+                    disabled={categoryImageUploading}
+                  />
+                  {categoryImagePreview ? (
+                    <>
+                      <img
+                        src={categoryImagePreview}
+                        alt="پیش‌نمایش تصویر دسته‌بندی"
+                        className="w-24 h-24 object-cover rounded-xl shadow-md"
+                      />
+                      <div className="mt-3 text-sm font-medium text-primary">
+                        تصویر انتخاب شده
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <div className="text-sm font-medium text-muted-soft">
+                        انتخاب تصویر دسته‌بندی
+                      </div>
+                      <p className="text-xs text-muted mt-1">
+                        فرمت‌های پشتیبانی شده: JPG, PNG, WEBP
+                      </p>
+                    </>
+                  )}
+                  {categoryImageUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-black/80 rounded-xl">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                        <p className="text-sm font-medium text-primary">در حال آپلود...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button

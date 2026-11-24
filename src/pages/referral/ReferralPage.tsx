@@ -360,7 +360,7 @@ export default function ReferralPage() {
       </div>
 
       {/* Top Referrers */}
-      {stats && stats.topReferrers.length > 0 && (
+      {stats && stats.topReferrers && stats.topReferrers.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-fg">بهترین معرفین</h3>
           <DataTable<ReferralStat['topReferrers'][0]>
@@ -393,8 +393,8 @@ export default function ReferralPage() {
                 render: (value: number) => <span className="font-bold text-primary text-lg">{value}</span>,
               },
             ]}
-            data={stats.topReferrers}
-            total={stats.topReferrers.length}
+            data={stats.topReferrers ?? []}
+            total={stats.topReferrers?.length ?? 0}
             page={1}
             limit={10}
             totalPages={1}

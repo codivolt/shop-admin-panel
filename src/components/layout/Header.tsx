@@ -578,6 +578,7 @@ export default function Header({ onOpenSidebar }: HeaderProps) {
 
         {/* Notifications */}
         <button
+          onClick={() => navigate('/notifications')}
           className="relative overflow-hidden rounded-xl bg-gradient-to-b from-card-from to-card-to shadow-md shadow-black/10 dark:shadow-black/30 transition-all hover:shadow-lg active:scale-95 flex h-10 w-10 shrink-0 items-center justify-center text-fg-soft hover:text-fg md:h-11 md:w-11"
           aria-label="اعلان‌ها"
         >

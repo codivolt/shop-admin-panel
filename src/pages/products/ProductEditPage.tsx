@@ -13,6 +13,7 @@ import Modal from '../../components/layout/Modal';
 import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
+import { getAbsoluteImageUrl } from '../../lib/image';
 const productSchema = z.object({
   name: z.string().min(1, 'نام محصول الزامی است'),
   slug: z.string().optional(),
@@ -26,6 +27,16 @@ const productSchema = z.object({
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
+
+interface ProductAttributeValueResponse {
+  id: string;
+  productId: string;
+  attributeId: string;
+  value: string;
+  attribute?: { id: string; name: string; type: string };
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface Category {
   id: string;
@@ -47,6 +58,16 @@ interface CategoryAttribute {
   options: string | null;
   isRequired: boolean;
   sortOrder: number;
+}
+
+interface ProductImage {
+  id: string;
+  productId: string;
+  imageUrl: string;
+  isPrimary: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Product {
@@ -85,6 +106,116 @@ export default function ProductEditPage() {
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
   const [attributes, setAttributes] = useState<CategoryAttribute[]>([]);
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/products/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data.imageUrl;
+    },
+    onSuccess: (url) => {
+      const absoluteUrl = getAbsoluteImageUrl(url);
+      setUploadedImageUrl(url);
+      setImagePreview(absoluteUrl);
+      toast.success('تصویر آپلود شد');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
+      setImageFile(null);
+      setImagePreview(null);
+    },
+  });
+
+  // Fetch product images
+  const { data: imagesData, refetch: refetchImages } = useQuery<ProductImage[]>({
+    queryKey: ['productImages', id],
+    queryFn: async () => {
+      const res = await api.get<ProductImage[]>(`/products/${id}/images`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (imagesData) {
+      setProductImages(imagesData);
+    }
+  }, [imagesData]);
+
+  const uploadGalleryImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post(`/products/${id}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('تصویر گالری اضافه شد');
+      refetchImages();
+      setGalleryUploading(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
+      setGalleryUploading(false);
+    },
+  });
+
+  const updateGalleryImageMutation = useMutation({
+    mutationFn: async ({ imageId, data }: { imageId: string; data: { isPrimary?: boolean; sortOrder?: number } }) => {
+      const res = await api.put(`/products/${id}/images/${imageId}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      refetchImages();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'خطا در بروزرسانی تصویر');
+    },
+  });
+
+  const deleteGalleryImageMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      await api.delete(`/products/${id}/images/${imageId}`);
+    },
+    onSuccess: () => {
+      toast.success('تصویر حذف شد');
+      refetchImages();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'خطا در حذف تصویر');
+    },
+  });
+
+  const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setGalleryUploading(true);
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        uploadGalleryImageMutation.mutate(file);
+      }
+    });
+    e.target.value = '';
+  };
+
+  const handleSetPrimary = (imageId: string) => {
+    updateGalleryImageMutation.mutate({ imageId, data: { isPrimary: true } });
+  };
+
+  const handleDeleteGalleryImage = (imageId: string) => {
+    if (window.confirm('آیا از حذف این تصویر اطمینان دارید؟')) {
+      deleteGalleryImageMutation.mutate(imageId);
+    }
+  };
 
   const {
     register,
@@ -159,7 +290,8 @@ export default function ProductEditPage() {
       });
       setSelectedCategoryId(product.categoryId);
       setSelectedBrandId(product.brandId || '');
-      setImagePreview(product.imageUrl || null);
+      setImagePreview(getAbsoluteImageUrl(product.imageUrl) || null);
+      setUploadedImageUrl(null);
     }
   }, [product, reset]);
 
@@ -189,29 +321,51 @@ export default function ProductEditPage() {
   }, [selectedCategoryId, attributeValuesData]);
 
   const updateProductMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      const res = await api.put(`/products/${id}`, data);
+    mutationFn: async (data: ProductFormData & { imageUrl?: string }) => {
+      const payload = { ...data };
+      if (uploadedImageUrl) {
+        payload.imageUrl = uploadedImageUrl;
+      }
+      const res = await api.put(`/products/${id}`, payload);
       return res.data;
     },
-    onSuccess: (updatedProduct) => {
-      const savePromises = Object.entries(attributeValues).map(
-        ([attributeId, value]) => {
-          if (value.trim()) {
-            return api.post(`/products/${updatedProduct.id}/attribute-values`, {
-              attributeId,
-              value,
-            });
-          }
-          return Promise.resolve();
-        }
-      );
+    onSuccess: async (updatedProduct) => {
+      toast.success('محصول با موفقیت بروزرسانی شد');
+      try {
+        // First get existing attribute values to know which to create vs update
+        const existingRes = await api.get<ProductAttributeValueResponse[]>(
+          `/products/${updatedProduct.id}/attribute-values`
+        );
+        const existingValues = existingRes.data || [];
+        const existingMap = new Map(existingValues.map(v => [v.attributeId, v.id]));
 
-      Promise.all(savePromises).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['products'] });
-        queryClient.invalidateQueries({ queryKey: ['product', id] });
-        toast.success('محصول با موفقیت بروزرسانی شد');
-        navigate('/products');
-      });
+        const savePromises = Object.entries(attributeValues).map(
+          async ([attributeId, value]) => {
+            if (!value.trim()) return;
+            const existingId = existingMap.get(attributeId);
+            if (existingId) {
+              // Update existing
+              return api.put(`/products/${updatedProduct.id}/attribute-values/${existingId}`, {
+                attributeId,
+                value,
+              });
+            } else {
+              // Create new
+              return api.post(`/products/${updatedProduct.id}/attribute-values`, {
+                attributeId,
+                value,
+              });
+            }
+          }
+        );
+        await Promise.all(savePromises);
+      } catch (err) {
+        console.error('Failed to save attribute values:', err);
+        toast.error('بروزرسانی ویژگی‌ها با خطا مواجه شد');
+      }
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      navigate('/products');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'خطا در بروزرسانی محصول');
@@ -234,13 +388,15 @@ export default function ProductEditPage() {
       return;
     }
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    // Upload the image immediately
+    uploadImageMutation.mutate(file);
     setImageModalOpen(true);
   };
 
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setUploadedImageUrl(null);
     setImageModalOpen(false);
   };
 
@@ -330,6 +486,122 @@ export default function ProductEditPage() {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Gallery Images */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-fg">گالری تصاویر</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setGalleryModalOpen(true)}
+                disabled={galleryUploading}
+              >
+                {galleryUploading ? 'در حال آپلود...' : 'افزودن تصاویر'}
+              </Button>
+            </div>
+            {productImages.length === 0 ? (
+              <div className="text-center py-8 text-muted">
+                <p>هیچ تصویری در گالری وجود ندارد</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {productImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className={`relative group rounded-xl border overflow-hidden ${
+                      img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+                    }`}
+                  >
+                    <img
+                      src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
+                      alt={`Gallery ${img.id}`}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!img.isPrimary && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-white hover:bg-white/20"
+                          onClick={() => handleSetPrimary(img.id)}
+                        >
+                          اصلی
+                        </Button>
+                      )} else {
+                        <span className="text-xs text-green-300 bg-green-600/20 px-2 py-1 rounded">تصویر اصلی</span>
+                      }
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white hover:bg-red-500/20"
+                        onClick={() => handleDeleteGalleryImage(img.id)}
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                    {img.isPrimary && (
+                      <div className="absolute top-2 left-2">
+                        <span className="text-xs font-medium text-green-300 bg-green-900/50 px-1.5 py-0.5 rounded">
+                          اصلی
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Gallery Modal */}
+            <Modal
+              open={galleryModalOpen}
+              onClose={() => setGalleryModalOpen(false)}
+              title="افزودن تصاویر به گالری"
+              size="md"
+            >
+              <div className="space-y-4">
+                <div
+                  className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
+                    galleryUploading ? 'border-primary bg-primary/5' : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
+                  } cursor-pointer`}
+                  onClick={() => document.getElementById('gallery-image-input')?.click()}
+                >
+                  <input
+                    id="gallery-image-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryImageUpload}
+                    className="hidden"
+                    disabled={galleryUploading}
+                  />
+                  {galleryUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                      <p className="text-sm font-medium text-primary">در حال آپلود تصاویر...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <div className="text-sm font-medium text-muted-soft">
+                        انتخاب تصاویر (چندگانه)
+                      </div>
+                      <p className="text-xs text-muted mt-1">
+                        فرمت‌های پشتیبانی شده: JPG, PNG, WEBP
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="outline" onClick={() => setGalleryModalOpen(false)}>
+                    بستن
+                  </Button>
+                </div>
+              </div>
+            </Modal>
           </div>
 
           {/* Basic Info */}

@@ -50,11 +50,12 @@ export default function DeliveryPage() {
     queryKey: ['delivery'],
     queryFn: async () => {
       const res = await api.get('/delivery');
-      return res.data;
+      // Handle different response structures
+      return (res.data?.data ?? res.data ?? []) as DeliveryMethod[];
     },
   });
 
-  const deliveryMethods: DeliveryMethod[] = data ?? [];
+  const deliveryMethods: DeliveryMethod[] = Array.isArray(data) ? data : [];
 
   const createMutation = useMutation({
     mutationFn: async (payload: {
@@ -131,7 +132,7 @@ export default function DeliveryPage() {
         isActive: true,
       });
     }
-  }, [editingId, deliveryMethods]);
+  }, [editingId]);
 
   const columns: Column<DeliveryMethod>[] = useMemo(
     () => [
