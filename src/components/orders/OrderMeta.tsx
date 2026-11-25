@@ -20,6 +20,7 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: string | null;
   receiptImageUrl: string | null;
+  rejectionReason: string | null;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;

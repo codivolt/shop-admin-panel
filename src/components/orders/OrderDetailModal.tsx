@@ -5,6 +5,8 @@ import { api } from '../../services/api';
 import Button from '../button/Button';
 import Modal from '../layout/Modal';
 import CustomSelect from '../form/CustomSelect';
+import { AuthenticatedImage } from '../ui/AuthenticatedImage';
+import { ImageViewer } from '../ui/ImageViewer';
 import {
   formatCurrency,
   formatOrderDate,
@@ -35,6 +37,9 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const queryClient = useQueryClient();
   const [confirmingDelete, setConfirmingDelete] = useState(intent === 'delete');
+  const [showRejectionReason, setShowRejectionReason] = useState(false);
+  const [rejectionReasonText, setRejectionReasonText] = useState('');
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
 
   useEffect(() => {
     if (open) setConfirmingDelete(intent === 'delete');
@@ -69,13 +74,13 @@ export default function OrderDetailModal({
   });
 
   const paymentMutation = useMutation({
-    mutationFn: async ({ id, paymentStatus }: { id: string; paymentStatus: PaymentStatus }) => {
-      await api.put(`/orders/${id}/payment`, { paymentStatus });
-      return { id, paymentStatus };
+    mutationFn: async ({ id, paymentStatus, rejectionReason }: { id: string; paymentStatus: PaymentStatus; rejectionReason?: string }) => {
+      await api.put(`/orders/${id}/payment`, { paymentStatus, rejectionReason });
+      return { id, paymentStatus, rejectionReason: rejectionReason ?? null };
     },
-    onSuccess: ({ id, paymentStatus }) => {
+    onSuccess: ({ id, paymentStatus, rejectionReason }) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.setQueryData<Order>(['order', id], (prev) => (prev ? { ...prev, paymentStatus } : prev));
+      queryClient.setQueryData<Order>(['order', id], (prev) => (prev ? { ...prev, paymentStatus, rejectionReason: rejectionReason ?? null } : prev));
       toast.success(`وضعیت پرداخت به «${PAYMENT_STATUS[paymentStatus].label}» تغییر کرد`);
     },
     onError: (err: any) => {
@@ -107,7 +112,8 @@ export default function OrderDetailModal({
   const title = confirmingDelete ? 'حذف سفارش' : 'جزئیات سفارش';
 
   return (
-    <Modal open={open} onClose={onClose} title={title} size="lg">
+    <>
+      <Modal open={open} onClose={onClose} title={title} size="lg">
       {confirmingDelete ? (
         <div className="space-y-5">
           <div className="flex items-start gap-3">
@@ -234,22 +240,87 @@ export default function OrderDetailModal({
                 <span className="text-xs font-semibold text-muted uppercase tracking-wider">فیش پرداخت</span>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={order.receiptImageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  نمایش فیش
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-4l-4.586-4.586a2 2 0 012.828 0L16 8m-4 4zm0 0L6 14m0 0l4.586 4.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                {order.receiptImageUrl && (
+                  <AuthenticatedImage
+                    src={order.receiptImageUrl}
+                    alt="فیش پرداخت"
+                    className="mt-2 max-w-xs max-h-40 rounded-lg border border-border object-cover"
+                    onView={() => setImageViewerOpen(true)}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {order.receiptImageUrl && order.paymentStatus !== "paid" && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex shrink-0 items-center justify-center rounded-full bg-amber-100 p-2 text-amber-600">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                </a>
-                <img
-                  src={order.receiptImageUrl}
-                  alt="فیش پرداخت"
-                  className="mt-2 max-w-xs max-h-40 rounded-lg border border-border object-cover"
-                />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-amber-800">تایید یا رد فیش پرداخت</h3>
+                  <p className="mt-1 text-sm text-amber-700">
+                    فیش بارگذاری شده است. وضعیت پرداخت را مشخص کنید.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 sm:gap-3">
+                <Button
+                  size="sm"
+                  disabled={isPending}
+                  onClick={() => paymentMutation.mutate({ id: order.id, paymentStatus: "paid" as PaymentStatus })}
+                >
+                  {paymentMutation.isPending ? "در حال تایید..." : "تایید فیش"}
+                </Button>
+                {showRejectionReason ? (
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                    <textarea
+                      value={rejectionReasonText}
+                      onChange={(e) => setRejectionReasonText(e.target.value)}
+                      placeholder="دلیل رد فیش را بنویسید..."
+                      className="flex-1 min-h-[80px] rounded-xl border border-border bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowRejectionReason(false);
+                          setRejectionReasonText('');
+                        }}
+                      >
+                        انصراف
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={isPending || !rejectionReasonText.trim()}
+                        onClick={() =>
+                          paymentMutation.mutate({
+                            id: order.id,
+                            paymentStatus: "unpaid" as PaymentStatus,
+                            rejectionReason: rejectionReasonText.trim(),
+                          })
+                        }
+                      >
+                        {paymentMutation.isPending ? "در حال رد..." : "تایید رد"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-900"
+                    onClick={() => setShowRejectionReason(true)}
+                  >
+                    رد فیش
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -297,5 +368,12 @@ export default function OrderDetailModal({
         </div>
       ) : null}
     </Modal>
+    <ImageViewer
+      open={imageViewerOpen}
+      onClose={() => setImageViewerOpen(false)}
+      src={order?.receiptImageUrl ?? null}
+      title="فیش پرداخت"
+    />
+    </>
   );
 }
