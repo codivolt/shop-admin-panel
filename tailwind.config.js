@@ -6,6 +6,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        display: ['Lalezar', 'Vazirmatn', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
         // Brand colors support opacity modifiers (e.g. bg-primary/10)
         primary: {

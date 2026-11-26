@@ -37,21 +37,11 @@ const FEATURES = [
 
 function BrandMark({ className }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 via-secondary-600 to-accent-600 shadow-lg shadow-[rgb(var(--primary-rgb)/0.35)] ${className || ''}`}>
-      <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.18] to-transparent" />
-      <svg
-        className="relative z-10 h-1/2 w-1/2 text-white"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
+    <div
+      className={`relative flex items-center justify-center overflow-hidden rounded-2xl bg-[#0b0b12] shadow-lg shadow-[rgb(var(--primary-rgb)/0.35)] ring-1 ring-white/15 ${className || ''}`}
+    >
+      <img src="/rollchi-logo.webp" alt="لوگوی رولچی" className="h-full w-full object-cover" />
+      <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
     </div>
   );
 }
@@ -68,6 +58,7 @@ export default function LoginPage() {
         <div className="absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[rgb(var(--primary-rgb)/0.18)] blur-3xl" />
         <div className="absolute -left-28 top-1/3 h-80 w-80 rounded-full bg-[rgb(var(--secondary-rgb)/0.16)] blur-3xl" />
         <div className="absolute -bottom-24 right-1/3 h-72 w-72 rounded-full bg-[rgb(var(--accent-rgb)/0.12)] blur-3xl" />
+        <div className="brand-splash pointer-events-none absolute inset-0 opacity-80" />
       </div>
 
       <div className="absolute left-4 top-4 z-20 sm:left-6 sm:top-6">
@@ -84,16 +75,16 @@ export default function LoginPage() {
               <div className="flex items-center gap-3">
                 <BrandMark className="h-11 w-11" />
                 <div>
-                  <p className="text-base font-bold tracking-tight text-fg">فروشگاه سیگار</p>
-                  <p className="text-[11px] text-muted">پنل مدیریت فروشگاه</p>
+                  <p className="font-display text-lg tracking-tight text-fg">رولچی</p>
+                  <p className="text-[11px] text-muted">پنل مدیریت رولچی</p>
                 </div>
               </div>
 
-              <h1 className="mt-12 text-3xl font-bold leading-tight tracking-tight text-fg">
+              <h1 className="font-display mt-12 text-3xl leading-tight tracking-tight text-fg">
                 همه‌چیز برای اداره‌ی
                 <br />
                 <span className="bg-gradient-to-l from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  فروشگاه شما
+                  رولچی
                 </span>
               </h1>
               <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
@@ -120,14 +111,14 @@ export default function LoginPage() {
           <div className="w-full max-w-md justify-self-center lg:max-w-none lg:justify-self-auto">
             <div className="mb-6 flex flex-col items-center text-center lg:hidden">
               <BrandMark className="mb-4 h-14 w-14" />
-              <p className="text-lg font-bold tracking-tight text-fg">فروشگاه سیگار</p>
+              <p className="font-display text-xl tracking-tight text-fg">رولچی</p>
               <p className="mt-1 text-xs text-muted">ورود به پنل مدیریت</p>
             </div>
 
             <div className="overflow-hidden rounded-3xl border border-border bg-gradient-to-b from-card-from to-card-to shadow-2xl shadow-black/10 dark:shadow-black/50">
               <div className="p-6 sm:p-8">
                 <div className="mb-7">
-                  <h2 className="text-xl font-bold tracking-tight text-fg sm:text-2xl">خوش آمدید</h2>
+                  <h2 className="font-display text-2xl tracking-tight text-fg sm:text-3xl">خوش آمدید</h2>
                   <p className="mt-1.5 text-sm text-muted">
                     برای ادامه، شماره موبایل و رمز عبور حساب خود را وارد کنید.
                   </p>
@@ -196,7 +187,7 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-6 text-center text-[11px] text-muted-soft">
-              © {new Date().toLocaleDateString('fa-IR', { year: 'numeric' })} فروشگاه سیگار — تمامی حقوق محفوظ است.
+              © {new Date().toLocaleDateString('fa-IR', { year: 'numeric' })} رولچی — تمامی حقوق محفوظ است.
             </p>
           </div>
         </div>

@@ -1,16 +1,22 @@
 {
-  "name": "فروشگاه سیگار - پنل مدیریت",
-  "short_name": "پنل مدیریت",
-  "description": "پنل مدیریت فروشگاه سیگار",
+  "name": "رولچی | پنل مدیریت",
+  "short_name": "رولچی",
+  "description": "پنل مدیریت فروشگاه رولچی",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1f2937",
+  "background_color": "#06060a",
+  "theme_color": "#06060a",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "fa",
   "dir": "rtl",
   "icons": [
+    {
+      "src": "/rollchi-logo.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
     {
       "src": "/pwa-192x192.png",
       "sizes": "192x192",
