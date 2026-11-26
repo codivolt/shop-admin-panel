@@ -10,9 +10,17 @@ export interface OrderItem {
   totalPrice: number;
 }
 
+export interface OrderUser {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+}
+
 export interface Order {
   id: string;
   userId: string;
+  user?: OrderUser;
   addressId: string;
   deliveryMethodId: string | null;
   deliveryPrice: number;

@@ -81,6 +81,28 @@ export default function OrdersPage() {
         ),
       },
       {
+        key: 'user',
+        label: 'مشتری',
+        width: '18%',
+        render: (_value, row) => {
+          const fullName = [row.user?.firstName, row.user?.lastName]
+            .filter(Boolean)
+            .join(' ');
+          return (
+            <div className="min-w-0">
+              <div className="truncate text-xs font-medium text-fg">
+                {fullName || '—'}
+              </div>
+              {row.user?.phone ? (
+                <div className="text-[11px] text-muted" dir="ltr">
+                  {row.user.phone}
+                </div>
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
         key: 'items',
         label: 'اقلام',
         width: '14%',
