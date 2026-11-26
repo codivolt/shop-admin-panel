@@ -206,15 +206,23 @@ export default function OrderDetailModal({
               <div>
                 <div className="text-[11px] text-muted">نام و نام خانوادگی</div>
                 <div className="text-sm font-medium text-fg">
-                  {[order.user?.firstName, order.user?.lastName].filter(Boolean).join(' ') || '—'}
+                  {order.customerName ||
+                    [order.user?.firstName, order.user?.lastName].filter(Boolean).join(' ') ||
+                    '—'}
                 </div>
               </div>
               <div>
                 <div className="text-[11px] text-muted">شماره موبایل</div>
                 <div className="text-sm font-medium text-fg" dir="ltr">
-                  {order.user?.phone || '—'}
+                  {order.customerPhone || order.user?.phone || '—'}
                 </div>
               </div>
+              {order.customerAddress ? (
+                <div className="sm:col-span-2">
+                  <div className="text-[11px] text-muted">آدرس</div>
+                  <div className="text-sm text-fg leading-6">{order.customerAddress}</div>
+                </div>
+              ) : null}
             </div>
           </div>
 

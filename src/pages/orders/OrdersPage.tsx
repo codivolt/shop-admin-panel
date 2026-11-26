@@ -88,17 +88,18 @@ export default function OrdersPage() {
         label: 'مشتری',
         width: '18%',
         render: (_value, row) => {
-          const fullName = [row.user?.firstName, row.user?.lastName]
-            .filter(Boolean)
-            .join(' ');
+          const fullName =
+            row.customerName ||
+            [row.user?.firstName, row.user?.lastName].filter(Boolean).join(' ');
+          const phone = row.customerPhone || row.user?.phone;
           return (
             <div className="min-w-0">
               <div className="truncate text-xs font-medium text-fg">
                 {fullName || '—'}
               </div>
-              {row.user?.phone ? (
+              {phone ? (
                 <div className="text-[11px] text-muted" dir="ltr">
-                  {row.user.phone}
+                  {phone}
                 </div>
               ) : null}
             </div>
