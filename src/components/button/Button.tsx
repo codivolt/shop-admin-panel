@@ -12,15 +12,15 @@ const baseStyles =
 
 const variants: Record<string, string> = {
   primary:
-    'bg-gradient-to-b from-primary to-primary-600 text-fg shadow-lg shadow-[rgb(var(--primary-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--primary-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
+    'bg-gradient-to-b from-primary to-primary-600 text-[#0b0b12] shadow-lg shadow-[rgb(var(--primary-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--primary-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
   secondary:
-    'bg-gradient-to-b from-secondary to-secondary-600 text-fg shadow-lg shadow-[rgb(var(--secondary-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--secondary-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
+    'bg-gradient-to-b from-secondary to-secondary-600 text-[#0b0b12] shadow-lg shadow-[rgb(var(--secondary-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--secondary-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
   outline:
     'bg-gradient-to-b from-card-from to-card-to text-fg-soft shadow-lg shadow-black/10 dark:shadow-black/40 hover:text-fg hover:shadow-xl hover:shadow-black/15 dark:hover:shadow-black/60 active:scale-[0.97]',
   ghost:
     'text-muted hover:bg-surface-2 hover:text-fg active:scale-[0.97]',
   danger:
-    'bg-gradient-to-b from-accent to-accent-600 text-fg shadow-lg shadow-[rgb(var(--accent-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--accent-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
+    'bg-gradient-to-b from-accent to-accent-600 text-[#0b0b12] shadow-lg shadow-[rgb(var(--accent-rgb)/0.28)] hover:shadow-xl hover:shadow-[rgb(var(--accent-rgb)/0.38)] hover:brightness-[1.08] active:scale-[0.97]',
 };
 
 const sizes: Record<string, string> = {

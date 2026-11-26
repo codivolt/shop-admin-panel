@@ -12,7 +12,7 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
       <Breadcrumb />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-bold tracking-tight text-fg md:text-2xl">{title}</h1>
+          <h1 className="font-display truncate text-xl tracking-tight text-fg md:text-2xl">{title}</h1>
           {description && <p className="mt-1 text-sm text-muted">{description}</p>}
         </div>
         {actions && <div className="flex flex-col gap-2 sm:flex-row md:shrink-0">{actions}</div>}

@@ -98,6 +98,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
         aria-hidden={!open}
       >
+        <div className="splash-rule absolute inset-x-0 top-0 z-10" />
+
         {/* Decorative glows */}
         <div className="sidebar-glow -top-24 right-0 h-56 w-56 bg-[rgb(var(--primary-rgb)/0.10)]" />
         <div className="sidebar-glow bottom-0 left-0 h-48 w-48 bg-[rgb(var(--secondary-rgb)/0.08)]" />
@@ -106,15 +108,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="sidebar-brand">
           <Link to="/dashboard" onClick={onClose} className="sidebar-brand-link">
             <div className="sidebar-brand-mark">
-              <span className="sidebar-brand-mark-sheen" />
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="relative z-10 text-fg">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
+              <img
+                src="/rollchi-logo.webp"
+                alt="لوگوی رولچی"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="sidebar-brand-text-wrap">
-              <div className="sidebar-brand-name">فروشگاه سیگار</div>
+              <div className="sidebar-brand-name">رولچی</div>
               <div className="sidebar-brand-sub">پنل مدیریت</div>
             </div>
           </Link>
