@@ -381,16 +381,27 @@ export default function ProductEditPage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('لطفاً یک فایل تصویر انتخاب کنید');
-      return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const validFiles = files.filter((file) => file.type.startsWith('image/'));
+    if (validFiles.length !== files.length) {
+      toast.error('لطفاً فقط فایل تصویر انتخاب کنید');
     }
-    setImageFile(file);
-    // Upload the image immediately
-    uploadImageMutation.mutate(file);
-    setImageModalOpen(true);
+    if (validFiles.length === 0) return;
+
+    if (validFiles.length === 1) {
+      setImageFile(validFiles[0]);
+      uploadImageMutation.mutate(validFiles[0]);
+      setImageModalOpen(true);
+    } else {
+      // Multiple images: upload all to the gallery, first one becomes the main image
+      setGalleryUploading(true);
+      validFiles.forEach((file) => uploadGalleryImageMutation.mutate(file));
+      setImageFile(validFiles[0]);
+      uploadImageMutation.mutate(validFiles[0]);
+      setImageModalOpen(true);
+    }
+    e.target.value = '';
   };
 
   const removeImage = () => {
@@ -458,6 +469,7 @@ export default function ProductEditPage() {
                 id="product-image-input"
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
               />
@@ -478,10 +490,10 @@ export default function ProductEditPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <div className="text-sm font-medium text-muted-soft">
-                    انتخاب تصویر محصول
+                    انتخاب تصویر محصول (چندگانه)
                   </div>
                   <p className="text-xs text-muted mt-1">
-                    فرمت‌هایupported: JPG, PNG, WEBP
+                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — می‌توانید چند تصویر انتخاب کنید
                   </p>
                 </>
               )}
