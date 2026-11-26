@@ -13,6 +13,9 @@ import Modal from '../../components/layout/Modal';
 import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
+
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+
 const productSchema = z.object({
   name: z.string().min(1, 'نام محصول الزامی است'),
   slug: z.string().optional(),
@@ -182,19 +185,21 @@ export default function ProductAddPage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
-    const validFiles = files.filter((file) => file.type.startsWith('image/'));
-    if (validFiles.length !== files.length) {
-      toast.error('لطفاً فقط فایل تصویر انتخاب کنید');
+    const incoming = Array.from(e.target.files ?? []);
+    if (incoming.length === 0) return;
+
+    const validFiles = incoming.filter(
+      (file) => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE,
+    );
+    if (validFiles.length !== incoming.length) {
+      toast.error('هر تصویر باید حداکثر 2 مگابایت باشد و از نوع عکس باشد');
     }
     if (validFiles.length === 0) return;
 
-    setImageFiles(validFiles);
-    const previews = validFiles.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previews);
-    setImagePreview(previews[0] ?? null);
-    setImageModalOpen(true);
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+    setImageFiles((prev) => [...prev, ...validFiles]);
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+    setImagePreview((prev) => prev ?? newPreviews[0] ?? null);
     e.target.value = '';
   };
 
@@ -260,7 +265,7 @@ export default function ProductAddPage() {
                 className="hidden"
               />
               {imagePreviews.length > 0 ? (
-                <>
+                <div className="w-full">
                   <div className="flex flex-wrap justify-center gap-3">
                     {imagePreviews.map((src, idx) => (
                       <img
@@ -270,11 +275,24 @@ export default function ProductAddPage() {
                         className="w-24 h-24 object-cover rounded-xl shadow-md"
                       />
                     ))}
+                    <button
+                      type="button"
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        document.getElementById('product-image-input')?.click();
+                      }}
+                      className="flex flex-col items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="text-[11px] font-medium">افزودن</span>
+                    </button>
                   </div>
                   <div className="mt-3 text-sm font-medium text-primary">
                     {imagePreviews.length} تصویر انتخاب شده
                   </div>
-                </>
+                </div>
               ) : (
                 <>
                   <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +302,7 @@ export default function ProductAddPage() {
                     انتخاب تصویر محصول (چندگانه)
                   </div>
                   <p className="text-xs text-muted mt-1">
-                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — می‌توانید چند تصویر انتخاب کنید
+                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — حداکثر 2 مگابایت برای هر تصویر
                   </p>
                 </>
               )}

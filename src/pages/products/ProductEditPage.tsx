@@ -14,6 +14,9 @@ import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import { getAbsoluteImageUrl } from '../../lib/image';
+
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+
 const productSchema = z.object({
   name: z.string().min(1, 'نام محصول الزامی است'),
   slug: z.string().optional(),
@@ -100,6 +103,7 @@ export default function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -381,25 +385,27 @@ export default function ProductEditPage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
-    const validFiles = files.filter((file) => file.type.startsWith('image/'));
-    if (validFiles.length !== files.length) {
-      toast.error('لطفاً فقط فایل تصویر انتخاب کنید');
+    const incoming = Array.from(e.target.files ?? []);
+    if (incoming.length === 0) return;
+
+    const validFiles = incoming.filter(
+      (file) => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE,
+    );
+    if (validFiles.length !== incoming.length) {
+      toast.error('هر تصویر باید حداکثر 2 مگابایت باشد و از نوع عکس باشد');
     }
     if (validFiles.length === 0) return;
 
-    if (validFiles.length === 1) {
-      setImageFile(validFiles[0]);
-      uploadImageMutation.mutate(validFiles[0]);
-      setImageModalOpen(true);
-    } else {
-      // Multiple images: upload all to the gallery, first one becomes the main image
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+    setImagePreview(newPreviews[0] ?? null);
+    setImageFile(validFiles[0]);
+
+    // First image becomes the main product image, the rest go to the gallery
+    uploadImageMutation.mutate(validFiles[0]);
+    if (validFiles.length > 1) {
       setGalleryUploading(true);
-      validFiles.forEach((file) => uploadGalleryImageMutation.mutate(file));
-      setImageFile(validFiles[0]);
-      uploadImageMutation.mutate(validFiles[0]);
-      setImageModalOpen(true);
+      validFiles.slice(1).forEach((file) => uploadGalleryImageMutation.mutate(file));
     }
     e.target.value = '';
   };
@@ -407,6 +413,7 @@ export default function ProductEditPage() {
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setImagePreviews([]);
     setUploadedImageUrl(null);
     setImageModalOpen(false);
   };
@@ -473,7 +480,36 @@ export default function ProductEditPage() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              {imagePreview ? (
+              {imagePreviews.length > 0 ? (
+                <div className="w-full">
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {imagePreviews.map((src, idx) => (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt={`پیش نمایش ${idx + 1}`}
+                        className="w-24 h-24 object-cover rounded-xl shadow-md"
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        document.getElementById('product-image-input')?.click();
+                      }}
+                      className="flex flex-col items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="text-[11px] font-medium">افزودن</span>
+                    </button>
+                  </div>
+                  <div className="mt-3 text-sm font-medium text-primary">
+                    {imagePreviews.length} تصویر جدید انتخاب شده
+                  </div>
+                </div>
+              ) : imagePreview ? (
                 <>
                   <img
                     src={imagePreview}
@@ -481,7 +517,7 @@ export default function ProductEditPage() {
                     className="w-32 h-32 object-cover rounded-xl shadow-md"
                   />
                   <div className="mt-3 text-sm font-medium text-primary">
-                    تصویر انتخاب شده
+                    تصویر فعلی محصول
                   </div>
                 </>
               ) : (
@@ -493,7 +529,7 @@ export default function ProductEditPage() {
                     انتخاب تصویر محصول (چندگانه)
                   </div>
                   <p className="text-xs text-muted mt-1">
-                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — می‌توانید چند تصویر انتخاب کنید
+                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — حداکثر 2 مگابایت برای هر تصویر
                   </p>
                 </>
               )}
