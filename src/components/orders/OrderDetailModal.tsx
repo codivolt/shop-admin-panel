@@ -188,10 +188,33 @@ export default function OrderDetailModal({
               <div className="font-mono text-sm text-fg" dir="ltr">
                 #{shortOrderId(order.id)}
               </div>
+              {order.orderCode ? (
+                <div className="mt-0.5 text-[11px] text-muted" dir="ltr">
+                  کد: {order.orderCode}
+                </div>
+              ) : null}
             </div>
             <div className="text-left">
               <div className="text-[11px] text-muted">تاریخ ثبت</div>
               <div className="text-sm text-fg">{formatOrderDate(order.createdAt)}</div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface-2 p-4">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">مشتری</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-[11px] text-muted">نام و نام خانوادگی</div>
+                <div className="text-sm font-medium text-fg">
+                  {[order.user?.firstName, order.user?.lastName].filter(Boolean).join(' ') || '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] text-muted">شماره موبایل</div>
+                <div className="text-sm font-medium text-fg" dir="ltr">
+                  {order.user?.phone || '—'}
+                </div>
+              </div>
             </div>
           </div>
 

@@ -21,6 +21,7 @@ export interface Order {
   id: string;
   userId: string;
   user?: OrderUser;
+  orderCode?: string | null;
   addressId: string;
   deliveryMethodId: string | null;
   deliveryPrice: number;
