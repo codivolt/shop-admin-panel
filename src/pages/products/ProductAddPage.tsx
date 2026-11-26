@@ -58,7 +58,8 @@ export default function ProductAddPage() {
   const [attributes, setAttributes] = useState<CategoryAttribute[]>([]);
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
   const {
@@ -123,7 +124,7 @@ export default function ProductAddPage() {
       const res = await api.post('/products', data);
       return res.data;
     },
-    onSuccess: (newProduct) => {
+    onSuccess: async (newProduct) => {
       const savePromises = Object.entries(attributeValues).map(
         ([attributeId, value]) => {
           if (value.trim()) {
@@ -135,12 +136,37 @@ export default function ProductAddPage() {
           return Promise.resolve();
         }
       );
+      await Promise.all(savePromises);
 
-      Promise.all(savePromises).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['products'] });
-        toast.success('محصول با موفقیت ایجاد شد');
-        navigate('/products');
-      });
+      // Upload selected images: first becomes the main image, rest go to the gallery
+      if (imageFiles.length > 0) {
+        try {
+          const firstForm = new FormData();
+          firstForm.append('file', imageFiles[0]);
+          const mainRes = await api.post('/products/upload-image', firstForm, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          await api.put(`/products/${newProduct.id}`, {
+            imageUrl: mainRes.data.imageUrl,
+          });
+
+          for (const file of imageFiles.slice(1)) {
+            const form = new FormData();
+            form.append('file', file);
+            await api.post(`/products/${newProduct.id}/images`, form, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+          }
+        } catch (err: any) {
+          toast.error(
+            err.response?.data?.message || 'خطا در آپلود تصاویر محصول',
+          );
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('محصول با موفقیت ایجاد شد');
+      navigate('/products');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'خطا در ایجاد محصول');
@@ -156,19 +182,25 @@ export default function ProductAddPage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('لطفاً یک فایل تصویر انتخاب کنید');
-      return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const validFiles = files.filter((file) => file.type.startsWith('image/'));
+    if (validFiles.length !== files.length) {
+      toast.error('لطفاً فقط فایل تصویر انتخاب کنید');
     }
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    if (validFiles.length === 0) return;
+
+    setImageFiles(validFiles);
+    const previews = validFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previews);
+    setImagePreview(previews[0] ?? null);
     setImageModalOpen(true);
+    e.target.value = '';
   };
 
   const removeImage = () => {
-    setImageFile(null);
+    setImageFiles([]);
+    setImagePreviews([]);
     setImagePreview(null);
     setImageModalOpen(false);
   };
@@ -205,15 +237,15 @@ export default function ProductAddPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-bold text-fg">تصویر محصول</h2>
-              {imageFile && (
+              {imageFiles.length > 0 && (
                 <Button variant="outline" size="sm" onClick={removeImage}>
-                  حذف تصویر
+                  حذف تصاویر
                 </Button>
               )}
             </div>
             <div
               className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
-                imageFile
+                imageFiles.length > 0
                   ? 'border-border-strong bg-primary/10'
                     : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
               } cursor-pointer`}
@@ -223,18 +255,24 @@ export default function ProductAddPage() {
                 id="product-image-input"
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
               />
-              {imagePreview ? (
+              {imagePreviews.length > 0 ? (
                 <>
-                  <img
-                    src={imagePreview}
-                    alt="پیش نمایش"
-                    className="w-32 h-32 object-cover rounded-xl shadow-md"
-                  />
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {imagePreviews.map((src, idx) => (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt={`پیش نمایش ${idx + 1}`}
+                        className="w-24 h-24 object-cover rounded-xl shadow-md"
+                      />
+                    ))}
+                  </div>
                   <div className="mt-3 text-sm font-medium text-primary">
-                    تصویر انتخاب شده
+                    {imagePreviews.length} تصویر انتخاب شده
                   </div>
                 </>
               ) : (
@@ -243,10 +281,10 @@ export default function ProductAddPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <div className="text-sm font-medium text-muted-soft">
-                    انتخاب تصویر محصول
+                    انتخاب تصویر محصول (چندگانه)
                   </div>
                   <p className="text-xs text-muted mt-1">
-                    فرمت‌هایupported: JPG, PNG, WEBP
+                    فرمت‌های پشتیبانی شده: JPG, PNG, WEBP — می‌توانید چند تصویر انتخاب کنید
                   </p>
                 </>
               )}
