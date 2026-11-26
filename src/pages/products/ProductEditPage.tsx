@@ -14,18 +14,9 @@ import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import { getAbsoluteImageUrl } from '../../lib/image';
+import { slugify } from '../../lib/slugify';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-
-function slugify(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\p{L}\p{N}-]/gu, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
 
 const productSchema = z.object({
   name: z.string().min(1, 'نام محصول الزامی است'),
@@ -181,6 +172,7 @@ export default function ProductEditPage() {
     reset,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -198,8 +190,8 @@ export default function ProductEditPage() {
   });
 
   const watchedName = watch('name');
-  const watchedSlug = watch('slug');
   const lastGeneratedSlug = useRef<string>('');
+  const prevNameRef = useRef<string>('');
 
   const { data: product, isLoading: productLoading, refetch: refetchProduct } = useQuery<Product>({
     queryKey: ['product', id],
@@ -217,13 +209,19 @@ export default function ProductEditPage() {
   }, [product?.slug]);
 
   useEffect(() => {
-    if (!watchedName) return;
+    if (!watchedName) {
+      prevNameRef.current = '';
+      return;
+    }
+    if (watchedName === prevNameRef.current) return;
+    prevNameRef.current = watchedName;
     const generated = slugify(watchedName);
-    if (!watchedSlug || watchedSlug === lastGeneratedSlug.current) {
+    const currentSlug = getValues('slug');
+    if (!currentSlug || currentSlug === lastGeneratedSlug.current) {
       setValue('slug', generated);
       lastGeneratedSlug.current = generated;
     }
-  }, [watchedName, watchedSlug, setValue]);
+  }, [watchedName, getValues, setValue]);
 
   const mainImage =
     product?.imageUrl &&
