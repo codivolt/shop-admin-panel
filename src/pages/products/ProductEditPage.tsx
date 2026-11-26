@@ -227,7 +227,7 @@ export default function ProductEditPage() {
     },
   });
 
-  const { data: product, isLoading: productLoading } = useQuery<Product>({
+  const { data: product, isLoading: productLoading, refetch: refetchProduct } = useQuery<Product>({
     queryKey: ['product', id],
     queryFn: async () => {
       const res = await api.get<Product>(`/products/${id}`);
@@ -235,6 +235,28 @@ export default function ProductEditPage() {
     },
     enabled: !!id,
   });
+
+  const mainImage =
+    product?.imageUrl &&
+    !productImages.some((img) => img.imageUrl === product.imageUrl)
+      ? { id: 'main', imageUrl: product.imageUrl, isPrimary: true }
+      : null;
+  const displayImages = mainImage ? [mainImage, ...productImages] : productImages;
+
+  const removeMainImage = async () => {
+    if (!id) return;
+    if (!window.confirm('آیا از حذف تصویر اصلی اطمینان دارید؟')) return;
+    try {
+      await api.put(`/products/${id}`, { imageUrl: null });
+      setUploadedImageUrl(null);
+      setImagePreview(null);
+      await refetchProduct();
+      refetchImages();
+      toast.success('تصویر اصلی حذف شد');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'خطا در حذف تصویر اصلی');
+    }
+  };
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['productCategories'],
@@ -460,7 +482,7 @@ export default function ProductEditPage() {
             </div>
             <div
               className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
-                imagePreviews.length > 0 || productImages.length > 0
+                imagePreviews.length > 0 || displayImages.length > 0
                   ? 'border-border-strong bg-primary/10'
                     : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
               } cursor-pointer`}
@@ -474,10 +496,10 @@ export default function ProductEditPage() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              {imagePreviews.length > 0 || productImages.length > 0 ? (
+              {imagePreviews.length > 0 || displayImages.length > 0 ? (
                 <div className="w-full">
                   <div className="flex flex-wrap justify-center gap-3">
-                    {productImages.map((img) => (
+                    {displayImages.map((img) => (
                       <div key={img.id} className="relative">
                         <img
                           src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
@@ -488,7 +510,11 @@ export default function ProductEditPage() {
                           type="button"
                           onClick={(ev) => {
                             ev.stopPropagation();
-                            handleDeleteGalleryImage(img.id);
+                            if (img.id === 'main') {
+                              removeMainImage();
+                            } else {
+                              handleDeleteGalleryImage(img.id);
+                            }
                           }}
                           className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700"
                           aria-label="حذف تصویر"
@@ -497,7 +523,7 @@ export default function ProductEditPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                        {!img.isPrimary ? (
+                        {img.id !== 'main' && !img.isPrimary ? (
                           <button
                             type="button"
                             onClick={(ev) => {
@@ -559,7 +585,7 @@ export default function ProductEditPage() {
                     </button>
                   </div>
                   <div className="mt-3 text-sm font-medium text-primary">
-                    {productImages.length + imagePreviews.length} تصویر
+                    {displayImages.length + imagePreviews.length} تصویر
                   </div>
                 </div>
               ) : (
