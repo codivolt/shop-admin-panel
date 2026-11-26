@@ -210,6 +210,15 @@ export default function ProductAddPage() {
     setImageModalOpen(false);
   };
 
+  const removeImageAt = (index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      setImagePreview(next[0] ?? null);
+      return next;
+    });
+  };
+
   if (categoriesLoading || brandsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -268,12 +277,26 @@ export default function ProductAddPage() {
                 <div className="w-full">
                   <div className="flex flex-wrap justify-center gap-3">
                     {imagePreviews.map((src, idx) => (
-                      <img
-                        key={idx}
-                        src={src}
-                        alt={`پیش نمایش ${idx + 1}`}
-                        className="w-24 h-24 object-cover rounded-xl shadow-md"
-                      />
+                      <div key={idx} className="relative">
+                        <img
+                          src={src}
+                          alt={`پیش نمایش ${idx + 1}`}
+                          className="w-24 h-24 object-cover rounded-xl shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            removeImageAt(idx);
+                          }}
+                          className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700"
+                          aria-label="حذف تصویر"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     ))}
                     <button
                       type="button"
