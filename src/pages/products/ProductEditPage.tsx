@@ -112,7 +112,6 @@ export default function ProductEditPage() {
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
-  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
 
   const uploadImageMutation = useMutation({
@@ -200,13 +199,18 @@ export default function ProductEditPage() {
   });
 
   const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const incoming = Array.from(e.target.files ?? []);
+    if (incoming.length === 0) return;
+    const validFiles = incoming.filter(
+      (file) => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE,
+    );
+    if (validFiles.length !== incoming.length) {
+      toast.error('هر تصویر باید حداکثر 2 مگابایت باشد و از نوع عکس باشد');
+    }
+    if (validFiles.length === 0) return;
     setGalleryUploading(true);
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith('image/')) {
-        uploadGalleryImageMutation.mutate(file);
-      }
+    validFiles.forEach((file) => {
+      uploadGalleryImageMutation.mutate(file);
     });
     e.target.value = '';
   };
@@ -566,116 +570,75 @@ export default function ProductEditPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-fg">گالری تصاویر</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setGalleryModalOpen(true)}
-                disabled={galleryUploading}
-              >
-                {galleryUploading ? 'در حال آپلود...' : 'افزودن تصاویر'}
-              </Button>
+              <span className="text-xs text-muted">{productImages.length} تصویر</span>
             </div>
-            {productImages.length === 0 ? (
-              <div className="text-center py-8 text-muted">
-                <p>هیچ تصویری در گالری وجود ندارد</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {productImages.map((img) => (
-                  <div
-                    key={img.id}
-                    className={`relative group rounded-xl border overflow-hidden ${
-                      img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-border'
-                    }`}
-                  >
-                    <img
-                      src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
-                      alt={`Gallery ${img.id}`}
-                      className="w-full h-32 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!img.isPrimary && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-white hover:bg-white/20"
-                          onClick={() => handleSetPrimary(img.id)}
-                        >
-                          اصلی
-                        </Button>
-                      )} else {
-                        <span className="text-xs text-green-300 bg-green-600/20 px-2 py-1 rounded">تصویر اصلی</span>
-                      }
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-white hover:bg-red-500/20"
-                        onClick={() => handleDeleteGalleryImage(img.id)}
-                      >
-                        حذف
-                      </Button>
-                    </div>
-                    {img.isPrimary && (
-                      <div className="absolute top-2 left-2">
-                        <span className="text-xs font-medium text-green-300 bg-green-900/50 px-1.5 py-0.5 rounded">
-                          اصلی
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Gallery Modal */}
-            <Modal
-              open={galleryModalOpen}
-              onClose={() => setGalleryModalOpen(false)}
-              title="افزودن تصاویر به گالری"
-              size="md"
-            >
-              <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {productImages.map((img) => (
                 <div
-                  className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
-                    galleryUploading ? 'border-primary bg-primary/5' : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
-                  } cursor-pointer`}
-                  onClick={() => document.getElementById('gallery-image-input')?.click()}
+                  key={img.id}
+                  className={`relative group rounded-xl border overflow-hidden ${
+                    img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+                  }`}
                 >
-                  <input
-                    id="gallery-image-input"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryImageUpload}
-                    className="hidden"
-                    disabled={galleryUploading}
+                  <img
+                    src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
+                    alt={`Gallery ${img.id}`}
+                    className="w-full h-32 object-cover"
                   />
-                  {galleryUploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                      <p className="text-sm font-medium text-primary">در حال آپلود تصاویر...</p>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteGalleryImage(img.id)}
+                    className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700"
+                    aria-label="حذف تصویر"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  {!img.isPrimary ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSetPrimary(img.id)}
+                      className="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-1 rounded hover:bg-black/70"
+                    >
+                      تنظیم به عنوان اصلی
+                    </button>
                   ) : (
-                    <>
-                      <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <div className="text-sm font-medium text-muted-soft">
-                        انتخاب تصاویر (چندگانه)
-                      </div>
-                      <p className="text-xs text-muted mt-1">
-                        فرمت‌های پشتیبانی شده: JPG, PNG, WEBP
-                      </p>
-                    </>
+                    <div className="absolute top-2 left-2">
+                      <span className="text-xs font-medium text-green-300 bg-green-900/50 px-1.5 py-0.5 rounded">
+                        اصلی
+                      </span>
+                    </div>
                   )}
                 </div>
-                <div className="flex justify-end">
-                  <Button variant="outline" onClick={() => setGalleryModalOpen(false)}>
-                    بستن
-                  </Button>
-                </div>
-              </div>
-            </Modal>
+              ))}
+              <button
+                type="button"
+                onClick={() => document.getElementById('gallery-image-input')?.click()}
+                disabled={galleryUploading}
+                className="flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+              >
+                {galleryUploading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                ) : (
+                  <>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="text-[11px] font-medium mt-1">افزودن</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              id="gallery-image-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleGalleryImageUpload}
+              className="hidden"
+              disabled={galleryUploading}
+            />
           </div>
 
           {/* Basic Info */}
