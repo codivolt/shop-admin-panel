@@ -8,6 +8,7 @@ import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import OrderDetailModal from '../../components/orders/OrderDetailModal';
 import CustomSelect from '../../components/form/CustomSelect';
+import Input from '../../components/input/Input';
 import {
   formatCurrency,
   formatOrderDate,
@@ -30,10 +31,11 @@ export default function OrdersPage() {
   const [limit, setLimit] = useState(10);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [paymentFilter, setPaymentFilter] = useState<string>('');
+  const [search, setSearch] = useState<string>('');
   const [orderModal, setOrderModal] = useState<OrderModalState | null>(null);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['orders', page, limit, statusFilter, paymentFilter],
+    queryKey: ['orders', page, limit, statusFilter, paymentFilter, search],
     queryFn: async () => {
       const res = await api.get('/orders/admin', {
         params: {
@@ -41,6 +43,7 @@ export default function OrdersPage() {
           limit,
           ...(statusFilter ? { status: statusFilter } : {}),
           ...(paymentFilter ? { paymentStatus: paymentFilter } : {}),
+          ...(search.trim() ? { search: search.trim() } : {}),
         },
       });
       return res.data;
@@ -258,6 +261,18 @@ export default function OrdersPage() {
 
       {/* Filters */}
       <div className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="sm:col-span-2 lg:col-span-4">
+          <Input
+            name="search"
+            label="جستجو"
+            placeholder="شماره سفارش، کد سفارش، نام یا شماره موبایل مشتری"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
         <CustomSelect
           label="وضعیت سفارش"
           options={[
@@ -295,9 +310,10 @@ export default function OrdersPage() {
             onClick={() => {
               setStatusFilter('');
               setPaymentFilter('');
+              setSearch('');
               setPage(1);
             }}
-            disabled={!statusFilter && !paymentFilter}
+            disabled={!statusFilter && !paymentFilter && !search}
           >
             پاک کردن فیلترها
           </Button>
