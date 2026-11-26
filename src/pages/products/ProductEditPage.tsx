@@ -24,7 +24,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, 'قیمت نمی‌تواند منفی باشد'),
   stock: z.coerce.number().min(0, 'موجودی نمی‌تواند منفی باشد').optional(),
   sku: z.string().optional(),
-  categoryId: z.string().min(1, 'انتخاب دسته-building الزامی است'),
+  categoryId: z.string().min(1, 'انتخاب دسته‌بندی الزامی است'),
   brandId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
@@ -663,7 +663,7 @@ export default function ProductEditPage() {
           {/* Category Selection */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-fg-soft">
-              دسته-building *
+              دسته‌بندی *
             </label>
             <CustomSelect
               options={categories?.map((cat) => ({ value: cat.id, label: cat.name })) ?? []}
@@ -672,7 +672,7 @@ export default function ProductEditPage() {
                 setValue('categoryId', val as string);
                 setSelectedCategoryId(val as string);
               }}
-              label="دسته-building"
+              label="دسته‌بندی"
               required
               error={errors.categoryId?.message}
             />
@@ -704,9 +704,9 @@ export default function ProductEditPage() {
           {selectedCategoryId && attributes.length > 0 && (
             <div className="border-t border-border pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-fg">ویژگاهاً دسته-building</h3>
+                <h3 className="text-lg font-bold text-fg">ویژگی‌های دسته‌بندی</h3>
                 <p className="text-xs text-muted">
-                  ویژگی‌های تعریف شده برای این دسته-building
+                  ویژگی‌های تعریف شده برای این دسته‌بندی
                 </p>
               </div>
               <div className="space-y-4">
