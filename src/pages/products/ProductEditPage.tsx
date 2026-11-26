@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +16,16 @@ import Breadcrumb from '../../components/layout/Breadcrumb';
 import { getAbsoluteImageUrl } from '../../lib/image';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+
+function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\p{L}\p{N}-]/gu, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 const productSchema = z.object({
   name: z.string().min(1, 'نام محصول الزامی است'),
@@ -170,6 +180,7 @@ export default function ProductEditPage() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -186,6 +197,10 @@ export default function ProductEditPage() {
     },
   });
 
+  const watchedName = watch('name');
+  const watchedSlug = watch('slug');
+  const lastGeneratedSlug = useRef<string>('');
+
   const { data: product, isLoading: productLoading, refetch: refetchProduct } = useQuery<Product>({
     queryKey: ['product', id],
     queryFn: async () => {
@@ -194,6 +209,21 @@ export default function ProductEditPage() {
     },
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (product?.slug) {
+      lastGeneratedSlug.current = product.slug;
+    }
+  }, [product?.slug]);
+
+  useEffect(() => {
+    if (!watchedName) return;
+    const generated = slugify(watchedName);
+    if (!watchedSlug || watchedSlug === lastGeneratedSlug.current) {
+      setValue('slug', generated);
+      lastGeneratedSlug.current = generated;
+    }
+  }, [watchedName, watchedSlug, setValue]);
 
   const mainImage =
     product?.imageUrl &&
