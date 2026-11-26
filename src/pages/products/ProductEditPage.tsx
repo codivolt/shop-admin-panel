@@ -113,27 +113,6 @@ export default function ProductEditPage() {
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
 
-  const uploadImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/products/upload-image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return res.data.imageUrl;
-    },
-    onSuccess: (url) => {
-      const absoluteUrl = getAbsoluteImageUrl(url);
-      setUploadedImageUrl(url);
-      setImagePreview(absoluteUrl);
-      toast.success('تصویر آپلود شد');
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
-      setImagePreview(null);
-    },
-  });
-
   // Fetch product images
   const { data: imagesData, refetch: refetchImages } = useQuery<ProductImage[]>({
     queryKey: ['productImages', id],
@@ -149,26 +128,6 @@ export default function ProductEditPage() {
       setProductImages(imagesData);
     }
   }, [imagesData]);
-
-  const uploadGalleryImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post(`/products/${id}/images`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success('تصویر گالری اضافه شد');
-      refetchImages();
-      setGalleryUploading(false);
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
-      setGalleryUploading(false);
-    },
-  });
 
   const updateGalleryImageMutation = useMutation({
     mutationFn: async ({ imageId, data }: { imageId: string; data: { isPrimary?: boolean; sortOrder?: number } }) => {
@@ -391,7 +350,7 @@ export default function ProductEditPage() {
     setAttributeValues((prev) => ({ ...prev, [attributeId]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(e.target.files ?? []);
     if (incoming.length === 0) return;
 
@@ -401,17 +360,37 @@ export default function ProductEditPage() {
     if (validFiles.length !== incoming.length) {
       toast.error('هر تصویر باید حداکثر 2 مگابایت باشد و از نوع عکس باشد');
     }
-    if (validFiles.length === 0) return;
+    if (validFiles.length === 0 || !id) return;
 
     const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
     setImagePreview(newPreviews[0] ?? null);
+    setGalleryUploading(true);
 
-    // First image becomes the main product image, the rest go to the gallery
-    uploadImageMutation.mutate(validFiles[0]);
-    if (validFiles.length > 1) {
-      setGalleryUploading(true);
-      validFiles.slice(1).forEach((file) => uploadGalleryImageMutation.mutate(file));
+    try {
+      let firstImageId: string | null = null;
+      for (let i = 0; i < validFiles.length; i++) {
+        const form = new FormData();
+        form.append('file', validFiles[i]);
+        const res = await api.post(`/products/${id}/images`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (i === 0) firstImageId = res.data.id;
+      }
+      // Make the first newly added image the primary (main) image
+      if (firstImageId) {
+        await api.put(`/products/${id}/images/${firstImageId}`, {
+          isPrimary: true,
+        });
+      }
+      await refetchImages();
+      await refetchProduct();
+      setImagePreviews([]);
+      toast.success('تصاویر اضافه شد');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'خطا در آپلود تصاویر');
+    } finally {
+      setGalleryUploading(false);
     }
     e.target.value = '';
   };
