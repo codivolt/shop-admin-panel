@@ -104,7 +104,6 @@ export default function ProductEditPage() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
@@ -131,7 +130,6 @@ export default function ProductEditPage() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'خطا در آپلود تصویر');
-      setImageFile(null);
       setImagePreview(null);
     },
   });
@@ -197,23 +195,6 @@ export default function ProductEditPage() {
       toast.error(err.response?.data?.message || 'خطا در حذف تصویر');
     },
   });
-
-  const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const incoming = Array.from(e.target.files ?? []);
-    if (incoming.length === 0) return;
-    const validFiles = incoming.filter(
-      (file) => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE,
-    );
-    if (validFiles.length !== incoming.length) {
-      toast.error('هر تصویر باید حداکثر 2 مگابایت باشد و از نوع عکس باشد');
-    }
-    if (validFiles.length === 0) return;
-    setGalleryUploading(true);
-    validFiles.forEach((file) => {
-      uploadGalleryImageMutation.mutate(file);
-    });
-    e.target.value = '';
-  };
 
   const handleSetPrimary = (imageId: string) => {
     updateGalleryImageMutation.mutate({ imageId, data: { isPrimary: true } });
@@ -403,7 +384,6 @@ export default function ProductEditPage() {
     const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
     setImagePreview(newPreviews[0] ?? null);
-    setImageFile(validFiles[0]);
 
     // First image becomes the main product image, the rest go to the gallery
     uploadImageMutation.mutate(validFiles[0]);
@@ -415,7 +395,6 @@ export default function ProductEditPage() {
   };
 
   const removeImage = () => {
-    setImageFile(null);
     setImagePreview(null);
     setImagePreviews([]);
     setUploadedImageUrl(null);
@@ -427,7 +406,6 @@ export default function ProductEditPage() {
       const next = prev.filter((_, i) => i !== index);
       setImagePreview(next[0] ?? null);
       if (next.length === 0) {
-        setImageFile(null);
         setUploadedImageUrl(null);
       }
       return next;
@@ -474,15 +452,15 @@ export default function ProductEditPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-bold text-fg">تصویر محصول</h2>
-              {imageFile && (
+              {imagePreviews.length > 0 && (
                 <Button variant="outline" size="sm" onClick={removeImage}>
-                  حذف تصویر
+                  حذف تصاویر جدید
                 </Button>
               )}
             </div>
             <div
               className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
-                imageFile || imagePreview
+                imagePreviews.length > 0 || productImages.length > 0
                   ? 'border-border-strong bg-primary/10'
                     : 'border-border bg-surface-2 hover:border-primary hover:bg-surface-2'
               } cursor-pointer`}
@@ -496,11 +474,49 @@ export default function ProductEditPage() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              {imagePreviews.length > 0 ? (
+              {imagePreviews.length > 0 || productImages.length > 0 ? (
                 <div className="w-full">
                   <div className="flex flex-wrap justify-center gap-3">
+                    {productImages.map((img) => (
+                      <div key={img.id} className="relative">
+                        <img
+                          src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
+                          alt={`Gallery ${img.id}`}
+                          className="w-24 h-24 object-cover rounded-xl shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            handleDeleteGalleryImage(img.id);
+                          }}
+                          className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700"
+                          aria-label="حذف تصویر"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        {!img.isPrimary ? (
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              handleSetPrimary(img.id);
+                            }}
+                            className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded hover:bg-black/80 whitespace-nowrap"
+                          >
+                            اصلی
+                          </button>
+                        ) : (
+                          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-green-300 bg-green-900/70 px-1.5 py-0.5 rounded whitespace-nowrap">
+                            اصلی
+                          </span>
+                        )}
+                      </div>
+                    ))}
                     {imagePreviews.map((src, idx) => (
-                      <div key={idx} className="relative">
+                      <div key={`new-${idx}`} className="relative">
                         <img
                           src={src}
                           alt={`پیش نمایش ${idx + 1}`}
@@ -527,29 +543,25 @@ export default function ProductEditPage() {
                         ev.stopPropagation();
                         document.getElementById('product-image-input')?.click();
                       }}
-                      className="flex flex-col items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors"
+                      disabled={galleryUploading}
+                      className="flex flex-col items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
                     >
-                      <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      <span className="text-[11px] font-medium">افزودن</span>
+                      {galleryUploading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                      ) : (
+                        <>
+                          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-[11px] font-medium">افزودن</span>
+                        </>
+                      )}
                     </button>
                   </div>
                   <div className="mt-3 text-sm font-medium text-primary">
-                    {imagePreviews.length} تصویر جدید انتخاب شده
+                    {productImages.length + imagePreviews.length} تصویر
                   </div>
                 </div>
-              ) : imagePreview ? (
-                <>
-                  <img
-                    src={imagePreview}
-                    alt="پیش نمایش"
-                    className="w-32 h-32 object-cover rounded-xl shadow-md"
-                  />
-                  <div className="mt-3 text-sm font-medium text-primary">
-                    تصویر فعلی محصول
-                  </div>
-                </>
               ) : (
                 <>
                   <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -564,81 +576,6 @@ export default function ProductEditPage() {
                 </>
               )}
             </div>
-          </div>
-
-          {/* Gallery Images */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-fg">گالری تصاویر</h2>
-              <span className="text-xs text-muted">{productImages.length} تصویر</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {productImages.map((img) => (
-                <div
-                  key={img.id}
-                  className={`relative group rounded-xl border overflow-hidden ${
-                    img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-border'
-                  }`}
-                >
-                  <img
-                    src={getAbsoluteImageUrl(img.imageUrl) ?? ''}
-                    alt={`Gallery ${img.id}`}
-                    className="w-full h-32 object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteGalleryImage(img.id)}
-                    className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700"
-                    aria-label="حذف تصویر"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                  {!img.isPrimary ? (
-                    <button
-                      type="button"
-                      onClick={() => handleSetPrimary(img.id)}
-                      className="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-1 rounded hover:bg-black/70"
-                    >
-                      تنظیم به عنوان اصلی
-                    </button>
-                  ) : (
-                    <div className="absolute top-2 left-2">
-                      <span className="text-xs font-medium text-green-300 bg-green-900/50 px-1.5 py-0.5 rounded">
-                        اصلی
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => document.getElementById('gallery-image-input')?.click()}
-                disabled={galleryUploading}
-                className="flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-border text-muted hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
-              >
-                {galleryUploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                ) : (
-                  <>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span className="text-[11px] font-medium mt-1">افزودن</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <input
-              id="gallery-image-input"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleGalleryImageUpload}
-              className="hidden"
-              disabled={galleryUploading}
-            />
           </div>
 
           {/* Basic Info */}
