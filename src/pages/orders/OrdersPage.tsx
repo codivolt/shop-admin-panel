@@ -7,11 +7,14 @@ import StatCard from '../../components/stats/StatCard';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import OrderDetailModal from '../../components/orders/OrderDetailModal';
+import CustomSelect from '../../components/form/CustomSelect';
 import {
   formatCurrency,
   formatOrderDate,
   OrderStatusBadge,
   PaymentStatusBadge,
+  ORDER_STATUS,
+  PAYMENT_STATUS,
   shortOrderId,
   type Order,
   type OrderStatus,
@@ -25,12 +28,21 @@ type OrderModalState = { order: Order; intent: 'view' | 'delete' };
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [paymentFilter, setPaymentFilter] = useState<string>('');
   const [orderModal, setOrderModal] = useState<OrderModalState | null>(null);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['orders', page, limit],
+    queryKey: ['orders', page, limit, statusFilter, paymentFilter],
     queryFn: async () => {
-      const res = await api.get('/orders/admin', { params: { page, limit } });
+      const res = await api.get('/orders/admin', {
+        params: {
+          page,
+          limit,
+          ...(statusFilter ? { status: statusFilter } : {}),
+          ...(paymentFilter ? { paymentStatus: paymentFilter } : {}),
+        },
+      });
       return res.data;
     },
   });
@@ -220,6 +232,54 @@ export default function OrdersPage() {
             </svg>
           }
         />
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CustomSelect
+          label="وضعیت سفارش"
+          options={[
+            { value: '', label: 'همه وضعیت‌ها' },
+            ...Object.entries(ORDER_STATUS).map(([value, cfg]) => ({
+              value,
+              label: cfg.label,
+            })),
+          ]}
+          value={statusFilter}
+          onChange={(val) => {
+            setStatusFilter(val as string);
+            setPage(1);
+          }}
+        />
+        <CustomSelect
+          label="وضعیت پرداخت"
+          options={[
+            { value: '', label: 'همه پرداخت‌ها' },
+            ...Object.entries(PAYMENT_STATUS).map(([value, cfg]) => ({
+              value,
+              label: cfg.label,
+            })),
+          ]}
+          value={paymentFilter}
+          onChange={(val) => {
+            setPaymentFilter(val as string);
+            setPage(1);
+          }}
+        />
+        <div className="flex items-end lg:col-span-2 lg:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setStatusFilter('');
+              setPaymentFilter('');
+              setPage(1);
+            }}
+            disabled={!statusFilter && !paymentFilter}
+          >
+            پاک کردن فیلترها
+          </Button>
+        </div>
       </div>
 
       {/* Table */}

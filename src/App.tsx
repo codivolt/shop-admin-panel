@@ -29,6 +29,7 @@ import NotificationsPage from './pages/notifications/NotificationsPage';
 import PermissionsPage from './pages/permissions/PermissionsPage';
 import DeliveryPage from './pages/delivery/DeliveryPage';
 import PaymentAccountsPage from './pages/payment-accounts/PaymentAccountsPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { PERMISSIONS } from './constants';
 import toast from 'react-hot-toast';
 
@@ -304,6 +305,7 @@ export default function App() {
                 }
               />
               <Route path="permissions" element={<PermissionsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
               <Route
                 path="payment-accounts"
                 element={
