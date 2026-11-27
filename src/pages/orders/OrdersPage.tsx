@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import Button from '../../components/button/Button';
@@ -32,10 +32,19 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [paymentFilter, setPaymentFilter] = useState<string>('');
   const [search, setSearch] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [orderModal, setOrderModal] = useState<OrderModalState | null>(null);
 
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(id);
+  }, [search]);
+
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['orders', page, limit, statusFilter, paymentFilter, search],
+    queryKey: ['orders', page, limit, statusFilter, paymentFilter, debouncedSearch],
     queryFn: async () => {
       const res = await api.get('/orders/admin', {
         params: {
@@ -43,7 +52,7 @@ export default function OrdersPage() {
           limit,
           ...(statusFilter ? { status: statusFilter } : {}),
           ...(paymentFilter ? { paymentStatus: paymentFilter } : {}),
-          ...(search.trim() ? { search: search.trim() } : {}),
+          ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
         },
       });
       return res.data;
