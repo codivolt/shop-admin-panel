@@ -15,22 +15,9 @@ import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import { slugify } from '../../lib/slugify';
+import { productSchema, type ProductFormData } from '../../lib/product-schema';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-
-const productSchema = z.object({
-  name: z.string().min(1, 'نام محصول الزامی است'),
-  slug: z.string().optional(),
-  description: z.string().optional(),
-  price: z.coerce.number().min(0, 'قیمت نمی‌تواند منفی باشد'),
-  stock: z.coerce.number().min(0, 'موجودی نمی‌تواند منفی باشد').optional(),
-  sku: z.string().optional(),
-  categoryId: z.string().min(1, 'انتخاب دسته‌بندی الزامی است'),
-  brandId: z.string().optional(),
-  isActive: z.boolean().optional(),
-});
-
-type ProductFormData = z.infer<typeof productSchema>;
 
 interface Category {
   id: string;

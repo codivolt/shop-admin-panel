@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { ThemeProvider } from './theme/ThemeProvider';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAppSelector } from './hooks/useRedux';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ProtectedRoute, PermissionGuard } from './components/auth/RouteGuards';
 import LoginPage from './pages/LoginPage';
 import MainLayout from './components/layout/MainLayout';
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -31,34 +31,9 @@ import PaymentAccountsPage from './pages/payment-accounts/PaymentAccountsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AuditLogsPage from './pages/audit/AuditLogsPage';
 import { PERMISSIONS } from './constants';
-import toast, { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
-}
-
-function PermissionGuard({
-  permission,
-  children,
-}: {
-  permission: string | string[];
-  children: React.ReactNode;
-}) {
-  const { user } = useAppSelector((state) => state.auth);
-  const permissions = user?.permissions || [];
-  const required = Array.isArray(permission) ? permission : [permission];
-  if (user?.role === 'super_admin' || required.some((p) => permissions.includes(p))) {
-    return <>{children}</>;
-  }
-  toast.error('دسترسی به این بخش وجود ندارد');
-  return <Navigate to="/dashboard" replace />;
-}
 
 export default function App() {
   return (
