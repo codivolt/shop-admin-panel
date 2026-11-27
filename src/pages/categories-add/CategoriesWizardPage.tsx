@@ -1,114 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
-import CustomSelect from '../../components/form/CustomSelect';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import Breadcrumb from '../../components/layout/Breadcrumb';
+import Stepper from '../../components/categories/Stepper';
+import WizardAttributesStep from '../../components/categories/WizardAttributesStep';
+import { categorySchema, type CategoryFormData, type Category, type CategoryAttribute, type WizardAttribute } from '../../lib/categories-wizard';
 
 import { getAbsoluteImageUrl } from '../../lib/image';
-const categorySchema = z.object({
-  name: z.string().min(1, 'نام دسته‌بندی الزامی است'),
-  description: z.string().optional(),
-  isActive: z.boolean().optional(),
-});
-
-type CategoryFormData = z.infer<typeof categorySchema>;
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  parentId: string | null;
-  isActive: boolean;
-  imageUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CategoryAttribute {
-  id: string;
-  categoryId: string;
-  name: string;
-  type: string;
-  options: string | null;
-  isRequired: boolean;
-  sortOrder: number;
-}
-
-const ATTRIBUTE_TYPES = [
-  { value: 'text', label: 'متن' },
-  { value: 'number', label: 'عدد' },
-  { value: 'select', label: 'لیست انتخاب' },
-  { value: 'boolean', label: 'بله/خیر' },
-];
-
-interface WizardAttribute {
-  id: string;
-  name: string;
-  type: string;
-  options: string[];
-  isRequired: boolean;
-  sortOrder: number;
-}
-
-function Stepper({ steps, current }: { steps: string[]; current: number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-gradient-to-b from-card-from to-card-to p-4 shadow-lg shadow-black/25 sm:p-5">
-      <ol className="flex items-center gap-2 sm:gap-3">
-        {steps.map((label, index) => {
-          const stepNumber = index + 1;
-          const isDone = stepNumber < current;
-          const isActive = stepNumber === current;
-          return (
-            <li key={label} className={`flex items-center gap-2 sm:gap-3 ${index === steps.length - 1 ? '' : 'flex-1'}`}>
-              <div className="flex items-center gap-2.5">
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                    isDone
-                      ? 'bg-primary text-fg'
-                      : isActive
-                        ? 'bg-gradient-to-b from-primary to-primary-600 text-fg shadow-lg shadow-[rgb(var(--primary-rgb)/0.35)]'
-                        : 'border border-border bg-surface text-muted'
-                  }`}
-                >
-                  {isDone ? (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    stepNumber.toLocaleString('fa-IR')
-                  )}
-                </span>
-                <span
-                  className={`hidden text-xs font-medium sm:block ${
-                    isActive ? 'text-fg' : 'text-muted'
-                  }`}
-                >
-                  {label}
-                </span>
-              </div>
-              {index !== steps.length - 1 && (
-                <span
-                  className={`h-[3px] flex-1 rounded-full transition-colors ${
-                    isDone ? 'bg-primary/60' : 'bg-border'
-                  }`}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
-
 export default function CategoriesWizardPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
@@ -569,179 +473,25 @@ export default function CategoriesWizardPage() {
 
       {/* Step 2 */}
       {step === 2 && createdCategoryId && (
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[rgb(var(--secondary-rgb)/0.12)] text-secondary">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-fg">ویژگی‌های دسته‌بندی</h2>
-                <p className="text-xs text-muted">
-                  {attributes.length.toLocaleString('fa-IR')} ویژگی تعریف شده
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              بازگشت به مرحله قبل
-            </Button>
-          </div>
-
-          {attributes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
-              <p className="text-sm text-muted">هنوز ویژگی‌ای اضافه نشده است</p>
-              <Button size="sm" onClick={addAttribute}>
-                افزودن اولین ویژگی
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {attributes.map((attr, index) => (
-                <div
-                  key={attr.id}
-                  className="rounded-2xl border border-border bg-gradient-to-b from-card-from to-card-to p-4 shadow-lg shadow-black/20 sm:p-5"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-bold text-muted">
-                      {(index + 1).toLocaleString('fa-IR')}
-                    </span>
-                    <Input
-                      name={`attribute-name-${attr.id}`}
-                      placeholder="عنوان ویژگی، مثلاً رنگ"
-                      value={attr.name}
-                      onChange={(e) => updateAttributeName(attr.id, e.target.value)}
-                      className="flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeAttribute(attr.id)}
-                      title="حذف ویژگی"
-                      aria-label="حذف ویژگی"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-[#f87171]/50 hover:text-[#f87171]"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-medium text-muted">نوع ویژگی</label>
-                      <CustomSelect
-                        options={ATTRIBUTE_TYPES}
-                        value={attr.type}
-                        onChange={(val) => updateAttributeType(attr.id, val)}
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-medium text-muted">ترتیب نمایش</label>
-                      <Input
-                        name={`attribute-order-${attr.id}`}
-                        type="number"
-                        value={String(attr.sortOrder)}
-                        onChange={(e) => updateSortOrder(attr.id, parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => updateAttributeRequired(attr.id, !attr.isRequired)}
-                      className="flex items-center justify-between gap-3 self-end rounded-xl border border-border bg-surface-2 px-3.5 py-2.5 text-right transition-colors hover:border-muted-soft"
-                    >
-                      <span className="text-xs font-medium text-fg-soft">اجباری است</span>
-                      <span
-                        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                          attr.isRequired ? 'bg-primary' : 'bg-muted-soft'
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
-                            attr.isRequired ? 'right-0.5' : 'right-[18px]'
-                          }`}
-                        />
-                      </span>
-                    </button>
-                  </div>
-
-                  {attr.type === 'select' && (
-                    <div className="mt-4 rounded-xl border border-border bg-surface p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <label className="text-xs font-medium text-muted">گزینه‌ها</label>
-                        <span className="text-[11px] text-muted-soft">
-                          {attr.options.length.toLocaleString('fa-IR')} گزینه
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {attr.options.length === 0 && (
-                          <p className="rounded-lg border border-dashed border-border px-3 py-2.5 text-center text-[11px] text-muted-soft">
-                            هنوز گزینه‌ای اضافه نشده است
-                          </p>
-                        )}
-                        {attr.options.map((opt, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <Input
-                              name={`attribute-option-${attr.id}-${idx}`}
-                              placeholder="مثلاً قرمز"
-                              value={opt}
-                              onChange={(e) => updateOption(attr.id, idx, e.target.value)}
-                              className="flex-1"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeOption(attr.id, idx)}
-                              aria-label="حذف گزینه"
-                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:text-[#f87171]"
-                            >
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                        <Button variant="ghost" size="sm" onClick={() => addOption(attr.id)}>
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                          افزودن گزینه
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addAttribute}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3.5 text-sm font-medium text-muted transition-colors hover:border-primary hover:text-primary"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                افزودن ویژگی جدید
-              </button>
-            </div>
-          )}
-
-          <div className="flex flex-col-reverse gap-2 rounded-2xl border border-border bg-surface p-4 sm:flex-row sm:justify-between">
-            <Button variant="ghost" className="w-full sm:w-auto" onClick={goToList}>
-              انصراف
-            </Button>
-            <Button
-              type="button"
-              onClick={handleStep2Submit}
-              isLoading={createAttributesMutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              ذخیره و تکمیل
-            </Button>
-          </div>
-        </div>
+        <WizardAttributesStep
+          attributes={attributes}
+          isSaving={createAttributesMutation.isPending}
+          onAdd={addAttribute}
+          onRemove={removeAttribute}
+          onUpdateName={updateAttributeName}
+          onUpdateType={updateAttributeType}
+          onUpdateSort={(id, v) => updateSortOrder(id, v)}
+          onToggleRequired={(id) => {
+            const attr = attributes.find((x) => x.id === id);
+            if (attr) updateAttributeRequired(id, !attr.isRequired);
+          }}
+          onAddOption={addOption}
+          onRemoveOption={removeOption}
+          onUpdateOption={updateOption}
+          onBack={() => setStep(1)}
+          onCancel={goToList}
+          onSubmit={handleStep2Submit}
+        />
       )}
 
       {/* Step 3 */}

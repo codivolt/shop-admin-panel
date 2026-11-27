@@ -6,10 +6,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
-import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
-import CustomSelect from '../../components/form/CustomSelect';
-import Modal from '../../components/layout/Modal';
+import ConfirmDeleteModal from '../../components/layout/ConfirmDeleteModal';
+import AttributeFormModal from '../../components/category/AttributeFormModal';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
 import PageHeader from '../../components/layout/PageHeader';
@@ -17,86 +16,16 @@ import AccessDenied from '../../components/layout/AccessDenied';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
-type AttributeType = 'text' | 'number' | 'select' | 'boolean';
-
-const ATTRIBUTE_TYPES: { value: AttributeType; label: string }[] = [
-  { value: 'text', label: 'متن' },
-  { value: 'number', label: 'عدد' },
-  { value: 'select', label: 'لیست انتخاب' },
-  { value: 'boolean', label: 'بله / خیر' },
-];
-
-const TYPE_LABELS: Record<AttributeType, string> = {
-  text: 'متن',
-  number: 'عدد',
-  select: 'لیست انتخاب',
-  boolean: 'بله / خیر',
-};
-
-function parseOptionList(input?: string | null): string[] {
-  const raw = (input ?? '').trim();
-  if (!raw) return [];
-  if (raw.startsWith('[')) {
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed.map((item) => String(item)) : [];
-    } catch {
-      return [];
-    }
-  }
-  return raw
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function normalizeOptions(input?: string | null): string | null {
-  const list = parseOptionList(input);
-  return list.length > 0 ? JSON.stringify(list) : null;
-}
-
-const attributeSchema = z
-  .object({
-    name: z.string().trim().min(1, 'نام ویژگی الزامی است'),
-    type: z.enum(['text', 'number', 'select', 'boolean']),
-    options: z.string().optional(),
-    isRequired: z.boolean().optional(),
-    sortOrder: z.coerce
-      .number()
-      .int('ترتیب نمایش باید عدد صحیح باشد')
-      .min(0, 'ترتیب نمایش نمی‌تواند منفی باشد')
-      .optional(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.type === 'select' && !normalizeOptions(value.options)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['options'],
-        message: 'برای نوع لیست انتخاب، حداقل یک گزینه وارد کنید',
-      });
-    }
-  });
-
-type AttributeFormData = z.infer<typeof attributeSchema>;
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  isActive?: boolean;
-}
-
-interface CategoryAttribute {
-  id: string;
-  categoryId: string;
-  name: string;
-  type: AttributeType;
-  options: string | null;
-  isRequired: boolean;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import {
+  TYPE_LABELS,
+  attributeSchema,
+  parseOptionList,
+  normalizeOptions,
+  type AttributeType,
+  type AttributeFormData,
+  type Category,
+  type CategoryAttribute,
+} from '../../lib/category-attributes';
 
 const QUERY_KEY = 'category-attributes';
 
@@ -118,13 +47,7 @@ export default function CategoryAttributesPage() {
       sortOrder: 0,
     },
   });
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = methods;
+  const { handleSubmit, reset, watch } = methods;
 
   const currentType = watch('type');
   const optionsPreview = parseOptionList(watch('options'));
@@ -622,137 +545,26 @@ export default function CategoryAttributesPage() {
         </div>
       )}
 
-      <Modal
+      <AttributeFormModal
         open={open}
-        onClose={closeModal}
         title={editingAttributeId ? 'ویرایش ویژگی' : 'افزودن ویژگی'}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-5" noValidate>
-          <Input
-            name="name"
-            label="نام ویژگی"
-            placeholder="مثلاً رنگ"
-            required
-            methods={methods}
-          />
+        methods={methods}
+        currentType={currentType}
+        optionsPreview={optionsPreview}
+        isSaving={isSaving}
+        onClose={closeModal}
+        onSubmit={handleSubmit(handleSubmitForm)}
+      />
 
-          <CustomSelect
-            label="نوع ویژگی"
-            name="type"
-            methods={methods}
-            options={ATTRIBUTE_TYPES}
-            required
-          />
-
-          {currentType === 'select' && (
-            <div className="space-y-2 rounded-xl border border-border bg-surface-2 p-3.5">
-              <label className="block text-xs font-medium text-muted">
-                گزینه‌ها <span className="text-accent">*</span>
-              </label>
-              <textarea
-                {...register('options')}
-                rows={3}
-                placeholder="قرمز، آبی، سبز"
-                className={`field resize-y font-mono text-xs ${
-                  errors.options ? 'border-[#f87171] focus:border-[#f87171]' : ''
-                }`}
-                dir="ltr"
-              />
-              {errors.options ? (
-                <p className="text-xs font-medium text-[#f87171]">{errors.options.message}</p>
-              ) : (
-                <p className="text-[11px] text-muted">
-                  گزینه‌ها را با کاما جدا کنید یا آرایه JSON وارد کنید.
-                </p>
-              )}
-
-              {optionsPreview.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {optionsPreview.map((option) => (
-                    <span
-                      key={option}
-                      className="rounded-md border border-border bg-surface px-2 py-0.5 text-[11px] text-fg-soft"
-                    >
-                      {option}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Input
-                name="sortOrder"
-                label="ترتیب نمایش"
-                type="number"
-                placeholder="0"
-                methods={methods}
-              />
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-2.5 transition-colors hover:border-border-strong">
-                <input
-                  type="checkbox"
-                  {...register('isRequired')}
-                  className="h-4 w-4 rounded border-border text-primary accent-[rgb(var(--primary-rgb))] focus:ring-primary"
-                />
-                <span className="text-sm text-fg-soft">
-                  پر کردن این ویژگی روی محصول اجباری است
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full sm:w-auto"
-              onClick={closeModal}
-              disabled={isSaving}
-            >
-              لغو
-            </Button>
-            <Button type="submit" className="w-full sm:w-auto" isLoading={isSaving}>
-              {editingAttributeId ? 'ذخیره تغییرات' : 'افزودن ویژگی'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="حذف ویژگی" size="sm">
-        <div className="space-y-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(239,68,68,0.10)] text-red-400">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77-1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <p className="text-sm leading-6 text-muted">
-              ویژگی «<span className="font-semibold text-fg">{deleteTarget?.name}</span>» از این دسته‌بندی حذف می‌شود.
-              مقدارهای ثبت‌شده روی محصولات ممکن است از دست بروند.
-            </p>
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => setDeleteTarget(null)}>
-              انصراف
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              className="w-full sm:w-auto"
-              isLoading={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-            >
-              حذف ویژگی
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        title="حذف ویژگی"
+        message={<>ویژگی «<span className="font-semibold text-fg">{deleteTarget?.name}</span>» از این دستهبندی حذف میشود. مقدارهای ثبتشده روی محصولات ممکن است از دست بروند.</>}
+        confirmLabel="حذف ویژگی"
+        loading={deleteMutation.isPending}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+      />
     </div>
   );
 }
