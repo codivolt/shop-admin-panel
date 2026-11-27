@@ -7,7 +7,6 @@ import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
@@ -25,8 +24,7 @@ interface Brand {
 export default function BrandsPage() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
-  const debouncedSearch = useDebouncedValue(searchInput);
-  const search = debouncedSearch.trim();
+  const search = searchInput.trim();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 

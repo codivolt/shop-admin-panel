@@ -8,7 +8,6 @@ import StatCard from '../../components/stats/StatCard';
 import Modal from '../../components/layout/Modal';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 import Input from '../../components/input/Input';
@@ -56,8 +55,7 @@ interface DiscountStats {
 export default function DiscountsPage() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
-  const debouncedSearch = useDebouncedValue(searchInput);
-  const search = debouncedSearch.trim();
+  const search = searchInput.trim();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [statusFilter, setStatusFilter] = useState<string>('');

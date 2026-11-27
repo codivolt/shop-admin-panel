@@ -63,7 +63,7 @@ export default function DataTable<T>({
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [limitOpen, setLimitOpen] = useState(false);
-  const debouncedSearch = useDebouncedValue(searchTerm, 800);
+  const debouncedSearch = useDebouncedValue(searchTerm, 500);
 
   useEffect(() => {
     onSearch?.(debouncedSearch);
@@ -110,29 +110,6 @@ export default function DataTable<T>({
 
   const rangeStart = total === 0 ? 0 : (page - 1) * limit + 1;
   const rangeEnd = Math.min(page * limit, total);
-
-  if (loading) {
-    return (
-      <div className={className}>
-        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-xl shadow-black/20">
-          <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
-            <div className="h-9 w-64 animate-pulse rounded-xl bg-surface-2" />
-            <div className="h-9 w-32 animate-pulse rounded-xl bg-surface-2" />
-          </div>
-          <div className="divide-y divide-border">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-6 px-5 py-4">
-                <div className="h-4 flex-1 animate-pulse rounded-md bg-surface-2" />
-                <div className="h-4 w-24 animate-pulse rounded-md bg-surface-2" />
-                <div className="h-4 w-16 animate-pulse rounded-md bg-surface-2" />
-                <div className="h-4 w-20 animate-pulse rounded-md bg-surface-2" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={className}>
@@ -266,7 +243,20 @@ export default function DataTable<T>({
             </thead>
 
             <tbody className="divide-y divide-border">
-              {filteredData.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="px-5 py-4">
+                    <td colSpan={columns.length} className="px-5 py-4">
+                      <div className="flex items-center gap-6">
+                        <div className="h-4 flex-1 animate-pulse rounded-md bg-surface-2" />
+                        <div className="h-4 w-24 animate-pulse rounded-md bg-surface-2" />
+                        <div className="h-4 w-16 animate-pulse rounded-md bg-surface-2" />
+                        <div className="h-4 w-20 animate-pulse rounded-md bg-surface-2" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredData.length > 0 ? (
                 filteredData.map((row, rowIndex) => (
                   <tr
                     key={String((row as Record<string, unknown>).id ?? rowIndex)}
