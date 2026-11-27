@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { getBrands } from '../../features/brands/api';
 import Button from '../../components/button/Button';
 import { Link, useNavigate } from 'react-router-dom';
 import DataTable, { type Column } from '../../components/table/DataTable';
@@ -37,7 +37,7 @@ export default function BrandsPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['brands', page, limit, search],
     queryFn: async () => {
-      const res = await api.get('/brands', { params: { page, limit, search } });
+      const res = await getBrands({ page, limit, search });
       return res.data;
     },
   });

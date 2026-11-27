@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { getAuditLogs } from '../../features/audit/api';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
@@ -36,7 +36,7 @@ export default function AuditLogsPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['audit-logs', page, limit, search],
     queryFn: async () => {
-      const res = await api.get('/audit-logs', {
+      const res = await getAuditLogs({
         params: {
           page,
           limit,

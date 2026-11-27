@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { api } from '../../services/api';
+import { createCategoryAttribute, deleteCategoryAttribute, getCategories, getCategoryAttributes, updateCategoryAttribute } from '../../features/categories/api';
 import Button from '../../components/button/Button';
 import ConfirmDeleteModal from '../../components/layout/ConfirmDeleteModal';
 import AttributeFormModal from '../../components/category/AttributeFormModal';
@@ -60,7 +60,7 @@ export default function CategoryAttributesPage() {
   } = useQuery<Category[]>({
     queryKey: [QUERY_KEY, 'categories'],
     queryFn: async () => {
-      const res = await api.get('/categories', { params: { limit: 100 } });
+      const res = await getCategories({ limit: 100 });
       return res.data.data ?? [];
     },
   });
@@ -73,7 +73,7 @@ export default function CategoryAttributesPage() {
     queryKey: [QUERY_KEY, 'list', selectedCategoryId],
     queryFn: async () => {
       if (!selectedCategoryId) return [];
-      const res = await api.get(`/categories/${selectedCategoryId}/attributes`);
+      const res = await getCategoryAttributes(selectedCategoryId);
       return Array.isArray(res.data) ? res.data : [];
     },
     enabled: !!selectedCategoryId,
@@ -99,7 +99,7 @@ export default function CategoryAttributesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: AttributeFormData) => {
-      const res = await api.post(`/categories/${selectedCategoryId}/attributes`, payload);
+      const res = await createCategoryAttribute(selectedCategoryId!, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -114,7 +114,7 @@ export default function CategoryAttributesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: AttributeFormData }) => {
-      const res = await api.put(`/categories/${selectedCategoryId}/attributes/${id}`, payload);
+      const res = await updateCategoryAttribute(selectedCategoryId!, id, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -129,7 +129,7 @@ export default function CategoryAttributesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/categories/${selectedCategoryId}/attributes/${id}`);
+      await deleteCategoryAttribute(selectedCategoryId!, id);
     },
     onSuccess: () => {
       invalidateAttributes();

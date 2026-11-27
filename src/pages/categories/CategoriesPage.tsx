@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { deleteCategory, getCategories } from '../../features/categories/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -42,7 +42,7 @@ export default function CategoriesPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['categories', page, limit, search],
     queryFn: async () => {
-      const res = await api.get('/categories', { params: { page, limit, search } });
+      const res = await getCategories({ page, limit, search });
       return res.data;
     },
   });
@@ -54,7 +54,7 @@ export default function CategoriesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/categories/${id}`);
+      await deleteCategory(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });

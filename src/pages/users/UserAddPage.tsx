@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
+import { createUser } from '../../features/users/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
@@ -52,7 +52,7 @@ export default function UserAddPage() {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const res = await api.post('/users', data);
+      const res = await createUser(data);
       return res.data;
     },
     onSuccess: () => {

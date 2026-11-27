@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { deleteProduct, getProducts, updateProduct } from '../../features/products/api';
+import { getCategories } from '../../features/categories/api';
+import { getBrands } from '../../features/brands/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
@@ -78,7 +80,7 @@ export default function FeaturedProductsPage() {
   const { data: products, isLoading } = useQuery({
     queryKey: ['products', page, limit, search, featuredFilter],
     queryFn: async () => {
-      const res = await api.get('/products', { 
+      const res = await getProducts({ 
         params: { 
           page, 
           limit, 
@@ -93,7 +95,7 @@ export default function FeaturedProductsPage() {
   const { data: cats } = useQuery({
     queryKey: ['categories-all'],
     queryFn: async () => {
-      const res = await api.get('/categories', { params: { limit: 1000 } });
+      const res = await getCategories({ limit: 1000 });
       return (res.data?.data ?? []) as Array<{ id: string; name: string }>;
     },
   });
@@ -105,7 +107,7 @@ export default function FeaturedProductsPage() {
   const { data: brandsData } = useQuery({
     queryKey: ['brands-all'],
     queryFn: async () => {
-      const res = await api.get('/brands', { params: { limit: 1000 } });
+      const res = await getBrands({ limit: 1000 });
       return (res.data?.data ?? []) as Array<{ id: string; name: string }>;
     },
   });
@@ -119,7 +121,7 @@ export default function FeaturedProductsPage() {
 
   const featuredMutation = useMutation({
     mutationFn: async ({ id, isFeatured }: { id: string; isFeatured: boolean }) => {
-      const res = await api.put(`/products/${id}`, { isFeatured });
+      const res = await updateProduct(id, { isFeatured });
       return res.data;
     },
     onSuccess: () => {
@@ -133,7 +135,7 @@ export default function FeaturedProductsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Product> }) => {
-      const res = await api.put(`/products/${id}`, data);
+      const res = await updateProduct(id, data);
       return res.data;
     },
     onSuccess: () => {
@@ -150,7 +152,7 @@ export default function FeaturedProductsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/products/${id}`);
+      await deleteProduct(id);
     },
     onSuccess: () => {
       toast.success('محصول با موفقیت حذف شد');

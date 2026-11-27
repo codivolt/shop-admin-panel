@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { deleteUser, getUser } from '../../features/users/api';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
 import toast from 'react-hot-toast';
@@ -28,7 +28,7 @@ export default function UserProfilePage() {
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['user', id],
     queryFn: async () => {
-      const res = await api.get<User>(`/users/${id}`);
+      const res = await getUser(id!);
       return res.data;
     },
     enabled: !!id,
@@ -36,7 +36,7 @@ export default function UserProfilePage() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await api.delete(`/users/${id}`);
+      await deleteUser(id!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });

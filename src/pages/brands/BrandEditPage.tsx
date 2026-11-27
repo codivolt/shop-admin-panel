@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { getBrand, updateBrand } from '../../features/brands/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
@@ -60,7 +60,7 @@ export default function BrandEditPage() {
   const { data: brand, isLoading } = useQuery<Brand>({
     queryKey: ['brand', id],
     queryFn: async () => {
-      const res = await api.get<Brand>(`/brands/${id}`);
+      const res = await getBrand(id!);
       return res.data;
     },
     enabled: !!id,
@@ -68,7 +68,7 @@ export default function BrandEditPage() {
 
   const updateBrandMutation = useMutation({
     mutationFn: async (data: BrandFormData) => {
-      const res = await api.put(`/brands/${id}`, {
+      const res = await updateBrand(id!, {
         ...data,
         logo: logoPreview || brand?.logo || data.logo,
       });

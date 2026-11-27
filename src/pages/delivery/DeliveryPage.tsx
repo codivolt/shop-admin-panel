@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { createDeliveryMethod, deleteDeliveryMethod, getDeliveryMethods, updateDeliveryMethod } from '../../features/delivery/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -51,7 +51,7 @@ export default function DeliveryPage() {
   const { data, isLoading, error, refetch } = useQuery<DeliveryMethod[]>({
     queryKey: ['delivery'],
     queryFn: async () => {
-      const res = await api.get('/delivery');
+      const res = await getDeliveryMethods();
       // Handle different response structures
       return (res.data?.data ?? res.data ?? []) as DeliveryMethod[];
     },
@@ -66,7 +66,7 @@ export default function DeliveryPage() {
       description: string | null;
       isActive: boolean;
     }) => {
-      const res = await api.post('/delivery', payload);
+      const res = await createDeliveryMethod(payload);
       return res.data;
     },
     onSuccess: () => {
@@ -87,7 +87,7 @@ export default function DeliveryPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
-      const res = await api.put(`/delivery/${id}`, payload);
+      const res = await updateDeliveryMethod(id, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export default function DeliveryPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/delivery/${id}`);
+      await deleteDeliveryMethod(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery'] });

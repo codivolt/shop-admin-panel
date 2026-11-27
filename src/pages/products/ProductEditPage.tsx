@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { createProductAttributeValue, deleteProductImage, getProduct, getProductAttributeValues, getProductAttributeValuesResponse, getProductImages, updateProduct, updateProductAttributeValue, updateProductImage, uploadProductImageToGallery } from '../../features/products/api';
+import { getCategories, getCategoryAttributes } from '../../features/categories/api';
+import { getBrands } from '../../features/brands/api';
 import Input from '../../components/input/Input';
 import AmountInput from '../../components/input/AmountInput';
 import Button from '../../components/button/Button';
@@ -20,16 +22,6 @@ import { slugify } from '../../lib/slugify';
 import { productSchema, type ProductFormData } from '../../lib/product-schema';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-
-interface ProductAttributeValueResponse {
-  id: string;
-  productId: string;
-  attributeId: string;
-  value: string;
-  attribute?: { id: string; name: string; type: string };
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface Category {
   id: string;
@@ -107,7 +99,7 @@ export default function ProductEditPage() {
   const { data: imagesData, refetch: refetchImages } = useQuery<ProductImage[]>({
     queryKey: ['productImages', id],
     queryFn: async () => {
-      const res = await api.get<ProductImage[]>(`/products/${id}/images`);
+      const res = await getProductImages(id!);
       return res.data;
     },
     enabled: !!id,
@@ -121,7 +113,7 @@ export default function ProductEditPage() {
 
   const updateGalleryImageMutation = useMutation({
     mutationFn: async ({ imageId, data }: { imageId: string; data: { isPrimary?: boolean; sortOrder?: number } }) => {
-      const res = await api.put(`/products/${id}/images/${imageId}`, data);
+      const res = await updateProductImage(id!, imageId, data);
       return res.data;
     },
     onSuccess: () => {
@@ -134,7 +126,7 @@ export default function ProductEditPage() {
 
   const deleteGalleryImageMutation = useMutation({
     mutationFn: async (imageId: string) => {
-      await api.delete(`/products/${id}/images/${imageId}`);
+      await deleteProductImage(id!, imageId);
     },
     onSuccess: () => {
       toast.success('تصویر حذف شد');
@@ -186,7 +178,7 @@ export default function ProductEditPage() {
   const { data: product, isLoading: productLoading, refetch: refetchProduct } = useQuery<Product>({
     queryKey: ['product', id],
     queryFn: async () => {
-      const res = await api.get<Product>(`/products/${id}`);
+      const res = await getProduct(id!);
       return res.data;
     },
     enabled: !!id,
@@ -224,7 +216,7 @@ export default function ProductEditPage() {
     if (!id) return;
     if (!window.confirm('آیا از حذف تصویر اصلی اطمینان دارید؟')) return;
     try {
-      await api.put(`/products/${id}`, { imageUrl: null });
+      await updateProduct(id!, { imageUrl: null });
       setUploadedImageUrl(null);
       setImagePreview(null);
       await refetchProduct();
@@ -238,7 +230,7 @@ export default function ProductEditPage() {
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['productCategories'],
     queryFn: async () => {
-      const res = await api.get('/categories', { params: { limit: 100 } });
+      const res = await getCategories({ limit: 100 });
       return res.data.data;
     },
   });
@@ -246,7 +238,7 @@ export default function ProductEditPage() {
   const { data: brands, isLoading: brandsLoading } = useQuery<Brand[]>({
     queryKey: ['productBrands'],
     queryFn: async () => {
-      const res = await api.get('/brands', { params: { limit: 100 } });
+      const res = await getBrands({ limit: 100 });
       return res.data.data;
     },
   });
@@ -255,9 +247,7 @@ export default function ProductEditPage() {
     useQuery<ProductAttributeValue[]>({
       queryKey: ['productAttributeValues', id],
       queryFn: async () => {
-        const res = await api.get<ProductAttributeValue[]>(
-          `/products/${id}/attribute-values`
-        );
+        const res = await getProductAttributeValues(id!);
         return res.data;
       },
       enabled: !!id,
@@ -285,12 +275,11 @@ export default function ProductEditPage() {
 
   useEffect(() => {
     if (selectedCategoryId) {
-      api
-        .get<CategoryAttribute[]>(`/categories/${selectedCategoryId}/attributes`)
+      getCategoryAttributes(selectedCategoryId)
         .then((res) => {
           setAttributes(res.data);
           const newValues: Record<string, string> = {};
-          res.data.forEach((attr) => {
+          res.data.forEach((attr: any) => {
             const existing = attributeValuesData?.find(
               (av) => av.attributeId === attr.id
             );
@@ -314,18 +303,16 @@ export default function ProductEditPage() {
       if (uploadedImageUrl) {
         payload.imageUrl = uploadedImageUrl;
       }
-      const res = await api.put(`/products/${id}`, payload);
+      const res = await updateProduct(id!, payload);
       return res.data;
     },
     onSuccess: async (updatedProduct) => {
       toast.success('محصول با موفقیت بروزرسانی شد');
       try {
         // First get existing attribute values to know which to create vs update
-        const existingRes = await api.get<ProductAttributeValueResponse[]>(
-          `/products/${updatedProduct.id}/attribute-values`
-        );
+        const existingRes = await getProductAttributeValuesResponse(updatedProduct.id);
         const existingValues = existingRes.data || [];
-        const existingMap = new Map(existingValues.map(v => [v.attributeId, v.id]));
+        const existingMap = new Map<string, string>(existingValues.map((v: any) => [v.attributeId, v.id]));
 
         const savePromises = Object.entries(attributeValues).map(
           async ([attributeId, value]) => {
@@ -333,13 +320,13 @@ export default function ProductEditPage() {
             const existingId = existingMap.get(attributeId);
             if (existingId) {
               // Update existing
-              return api.put(`/products/${updatedProduct.id}/attribute-values/${existingId}`, {
+              return updateProductAttributeValue(updatedProduct.id, existingId, {
                 attributeId,
                 value,
               });
             } else {
               // Create new
-              return api.post(`/products/${updatedProduct.id}/attribute-values`, {
+              return createProductAttributeValue(updatedProduct.id, {
                 attributeId,
                 value,
               });
@@ -390,14 +377,14 @@ export default function ProductEditPage() {
       for (let i = 0; i < validFiles.length; i++) {
         const form = new FormData();
         form.append('file', validFiles[i]);
-        const res = await api.post(`/products/${id}/images`, form, {
+        const res = await uploadProductImageToGallery(id, form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         if (i === 0) firstImageId = res.data.id;
       }
       // Make the first newly added image the primary (main) image
       if (firstImageId) {
-        await api.put(`/products/${id}/images/${firstImageId}`, {
+        await updateProductImage(id, firstImageId, {
           isPrimary: true,
         });
       }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { createCategory, createCategoryAttribute, deleteCategoryAttribute, getCategory, getCategoryAttributes, updateCategory, updateCategoryAttribute, uploadCategoryImage } from '../../features/categories/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import Stepper from '../../components/categories/Stepper';
 import WizardAttributesStep from '../../components/categories/WizardAttributesStep';
-import { categorySchema, type CategoryFormData, type Category, type CategoryAttribute, type WizardAttribute } from '../../lib/categories-wizard';
+import { categorySchema, type CategoryFormData, type WizardAttribute } from '../../lib/categories-wizard';
 
 import { getAbsoluteImageUrl } from '../../lib/image';
 export default function CategoriesWizardPage() {
@@ -49,7 +49,7 @@ export default function CategoriesWizardPage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await api.post('/categories/upload-image', formData, {
+      const res = await uploadCategoryImage(formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return res.data.imageUrl;
@@ -139,7 +139,7 @@ export default function CategoriesWizardPage() {
   useEffect(() => {
     if (isEdit && id) {
       setInitialLoading(true);
-      api.get<Category>(`/categories/${id}`).then((res) => {
+      getCategory(id).then((res) => {
         const cat = res.data;
         reset({ name: cat.name, description: cat.description || '', isActive: cat.isActive });
         setCreatedCategoryId(cat.id);
@@ -149,10 +149,9 @@ export default function CategoriesWizardPage() {
         }
       });
 
-      api
-        .get<CategoryAttribute[]>(`/categories/${id}/attributes`)
+      getCategoryAttributes(id!)
         .then((res) => {
-          const attrs: WizardAttribute[] = res.data.map((a) => ({
+          const attrs: WizardAttribute[] = res.data.map((a: any) => ({
             id: a.id,
             name: a.name,
             type: a.type,
@@ -183,10 +182,10 @@ export default function CategoriesWizardPage() {
         }
       }
       if (isEdit && id) {
-        const res = await api.put(`/categories/${id}`, payload);
+        const res = await updateCategory(id, payload);
         return res.data;
       }
-      const res = await api.post('/categories', payload);
+      const res = await createCategory(payload);
       return res.data;
     },
     onSuccess: (newCategory) => {
@@ -205,9 +204,9 @@ export default function CategoriesWizardPage() {
       const newAttrs = attrs.filter((a) => a.id.length <= 20);
 
       const savePromises = [
-        ...removedAttributeIds.map((attrId) => api.delete(`/categories/${categoryId}/attributes/${attrId}`)),
+        ...removedAttributeIds.map((attrId) => deleteCategoryAttribute(categoryId, attrId)),
         ...existingAttrs.map((attr) =>
-          api.put(`/categories/${categoryId}/attributes/${attr.id}`, {
+          updateCategoryAttribute(categoryId, attr.id, {
             name: attr.name,
             type: attr.type,
             options: attr.type === 'select' ? JSON.stringify(attr.options.filter((o) => o.trim())) : undefined,
@@ -216,7 +215,7 @@ export default function CategoriesWizardPage() {
           })
         ),
         ...newAttrs.map((attr) =>
-          api.post(`/categories/${categoryId}/attributes`, {
+          createCategoryAttribute(categoryId, {
             name: attr.name,
             type: attr.type,
             options: attr.type === 'select' ? JSON.stringify(attr.options.filter((o) => o.trim())) : undefined,

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { getUser, updateUser } from '../../features/users/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
@@ -67,7 +67,7 @@ export default function UserEditPage() {
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ['user', id],
     queryFn: async () => {
-      const res = await api.get<User>(`/users/${id}`);
+      const res = await getUser(id!);
       return res.data;
     },
     enabled: !!id,
@@ -75,7 +75,7 @@ export default function UserEditPage() {
 
   const updateUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const res = await api.put(`/users/${id}`, data);
+      const res = await updateUser(id!, data);
       return res.data;
     },
     onSuccess: () => {

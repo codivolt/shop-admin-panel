@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { createReferralTier, deleteReferralTier, getReferralStats, getReferralTiers, updateReferralTier } from '../../features/referral/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
@@ -75,7 +75,7 @@ export default function ReferralPage() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['referral-stats'],
     queryFn: async () => {
-      const res = await api.get('/users/referral/stats');
+      const res = await getReferralStats();
       return res.data as ReferralStat;
     },
   });
@@ -84,7 +84,7 @@ export default function ReferralPage() {
   const { data: tiers, isLoading: tiersLoading } = useQuery({
     queryKey: ['referral-tiers'],
     queryFn: async () => {
-      const res = await api.get('/users/referral/tiers');
+      const res = await getReferralTiers();
       return res.data as ReferralTier[];
     },
   });
@@ -92,7 +92,7 @@ export default function ReferralPage() {
   // Create tier mutation
   const createTierMutation = useMutation({
     mutationFn: async (data: CreateTierData) => {
-      const res = await api.post('/users/referral/tiers', data);
+      const res = await createReferralTier(data);
       return res.data;
     },
     onSuccess: () => {
@@ -110,7 +110,7 @@ export default function ReferralPage() {
   // Update tier mutation
   const updateTierMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: CreateTierData }) => {
-      const res = await api.put(`/users/referral/tiers/${id}`, data);
+      const res = await updateReferralTier(id, data);
       return res.data;
     },
     onSuccess: () => {
@@ -128,7 +128,7 @@ export default function ReferralPage() {
   // Delete tier mutation
   const deleteTierMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/users/referral/tiers/${id}`);
+      await deleteReferralTier(id);
     },
     onSuccess: () => {
       toast.success('سطح رفرال با موفقیت حذف شد');

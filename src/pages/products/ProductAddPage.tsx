@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { createProduct, createProductAttributeValue, updateProduct, uploadProductImage, uploadProductImageToGallery } from '../../features/products/api';
+import { getCategories, getCategoryAttributes } from '../../features/categories/api';
+import { getBrands } from '../../features/brands/api';
 import Input from '../../components/input/Input';
 import AmountInput from '../../components/input/AmountInput';
 import Button from '../../components/button/Button';
@@ -97,7 +99,7 @@ export default function ProductAddPage() {
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['productCategories'],
     queryFn: async () => {
-      const res = await api.get('/categories', { params: { limit: 100 } });
+      const res = await getCategories({ limit: 100 });
       return res.data.data;
     },
   });
@@ -105,19 +107,18 @@ export default function ProductAddPage() {
   const { data: brands, isLoading: brandsLoading } = useQuery<Brand[]>({
     queryKey: ['productBrands'],
     queryFn: async () => {
-      const res = await api.get('/brands', { params: { limit: 100 } });
+      const res = await getBrands({ limit: 100 });
       return res.data.data;
     },
   });
 
   useEffect(() => {
     if (selectedCategoryId) {
-      api
-        .get<CategoryAttribute[]>(`/categories/${selectedCategoryId}/attributes`)
+      getCategoryAttributes(selectedCategoryId)
         .then((res) => {
           setAttributes(res.data);
           const newValues: Record<string, string> = {};
-          res.data.forEach((attr) => {
+          res.data.forEach((attr: any) => {
             newValues[attr.id] = '';
           });
           setAttributeValues(newValues);
@@ -134,14 +135,14 @@ export default function ProductAddPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      const res = await api.post('/products', data);
+      const res = await createProduct(data);
       return res.data;
     },
     onSuccess: async (newProduct) => {
       const savePromises = Object.entries(attributeValues).map(
         ([attributeId, value]) => {
           if (value.trim()) {
-            return api.post(`/products/${newProduct.id}/attribute-values`, {
+            return createProductAttributeValue(newProduct.id, {
               attributeId,
               value,
             });
@@ -156,17 +157,17 @@ export default function ProductAddPage() {
         try {
           const firstForm = new FormData();
           firstForm.append('file', imageFiles[0]);
-          const mainRes = await api.post('/products/upload-image', firstForm, {
+          const mainRes = await uploadProductImage(firstForm, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
-          await api.put(`/products/${newProduct.id}`, {
+          await updateProduct(newProduct.id, {
             imageUrl: mainRes.data.imageUrl,
           });
 
           for (const file of imageFiles.slice(1)) {
             const form = new FormData();
             form.append('file', file);
-            await api.post(`/products/${newProduct.id}/images`, form, {
+            await uploadProductImageToGallery(newProduct.id, form, {
               headers: { 'Content-Type': 'multipart/form-data' },
             });
           }

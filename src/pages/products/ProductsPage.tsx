@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { deleteProduct, getProducts } from '../../features/products/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -61,7 +61,7 @@ export default function ProductsPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['products', page, limit, search],
     queryFn: async () => {
-      const res = await api.get('/products', { params: { page, limit, search } });
+      const res = await getProducts({ page, limit, search });
       return res.data;
     },
   });
@@ -73,7 +73,7 @@ export default function ProductsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/products/${id}`);
+      await deleteProduct(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

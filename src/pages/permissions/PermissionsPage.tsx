@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { api } from '../../services/api';
+import { createPermission, deletePermission, getPermissions, getRolePermissions, updateRolePermissions } from '../../features/permissions/api';
 import PageHeader from '../../components/layout/PageHeader';
 import Button from '../../components/button/Button';
 import Modal from '../../components/layout/Modal';
@@ -74,7 +74,7 @@ export default function PermissionsPage() {
   const permissionsQuery = useQuery<Permission[]>({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const res = await api.get('/permissions');
+      const res = await getPermissions();
       return (res.data?.data ?? res.data ?? []) as Permission[];
     },
   });
@@ -82,7 +82,7 @@ export default function PermissionsPage() {
   const rolesQuery = useQuery<RolePermissions>({
     queryKey: ['permissions', 'roles'],
     queryFn: async () => {
-      const res = await api.get('/permissions/roles');
+      const res = await getRolePermissions();
       return (res.data?.data ?? res.data ?? {}) as RolePermissions;
     },
   });
@@ -121,7 +121,7 @@ export default function PermissionsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await api.put(`/permissions/roles/${role}`, { permissionKeys: selected });
+      await updateRolePermissions(role, selected);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['permissions', 'roles'] });
@@ -135,7 +135,7 @@ export default function PermissionsPage() {
   const createMutation = useMutation({
     mutationFn: async () => {
       const key = `${form.group.trim()}.${form.action.trim()}`;
-      await api.post('/permissions', {
+      await createPermission({
         key,
         name: form.name.trim(),
         description: form.description.trim() || undefined,
@@ -154,7 +154,7 @@ export default function PermissionsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/permissions/${id}`);
+      await deletePermission(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['permissions'] });

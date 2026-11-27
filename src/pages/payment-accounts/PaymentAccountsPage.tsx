@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { createPaymentAccount, deletePaymentAccount, getPaymentAccounts, updatePaymentAccount } from '../../features/payment-accounts/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
@@ -73,7 +73,7 @@ export default function PaymentAccountsPage() {
   const { data, isLoading, error, refetch } = useQuery<PaymentAccount[]>({
     queryKey: ['payment-accounts'],
     queryFn: async () => {
-      const res = await api.get('/payment-accounts');
+      const res = await getPaymentAccounts();
       return (res.data?.data ?? res.data ?? []) as PaymentAccount[];
     },
   });
@@ -92,7 +92,7 @@ export default function PaymentAccountsPage() {
       isActive: boolean;
       sortOrder: number;
     }) => {
-      const res = await api.post('/payment-accounts', payload);
+      const res = await createPaymentAccount(payload);
       return res.data;
     },
     onSuccess: () => {
@@ -118,7 +118,7 @@ export default function PaymentAccountsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
-      const res = await api.put(`/payment-accounts/${id}`, payload);
+      const res = await updatePaymentAccount(id, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -134,7 +134,7 @@ export default function PaymentAccountsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/payment-accounts/${id}`);
+      await deletePaymentAccount(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-accounts'] });

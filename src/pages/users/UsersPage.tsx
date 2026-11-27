@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { deleteUser, getUsers } from '../../features/users/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -44,7 +44,7 @@ export default function UsersPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['users', page, limit, search],
     queryFn: async () => {
-      const res = await api.get('/users', { params: { page, limit, search } });
+      const res = await getUsers({ page, limit, search });
       return res.data;
     },
   });
@@ -72,7 +72,7 @@ export default function UsersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/users/${id}`);
+      await deleteUser(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { getAdminOrders } from '../../features/orders/api';
 import Button from '../../components/button/Button';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
@@ -48,7 +48,7 @@ export default function OrdersPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['orders', page, limit, statusFilter, paymentFilter, debouncedSearch],
     queryFn: async () => {
-      const res = await api.get('/orders/admin', {
+      const res = await getAdminOrders({
         params: {
           page,
           limit,

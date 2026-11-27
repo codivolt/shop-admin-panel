@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { createDiscount, deleteDiscount, getDiscountStats, getDiscounts, updateDiscount } from '../../features/discounts/api';
 import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
@@ -86,7 +86,7 @@ export default function DiscountsPage() {
   const { data: discounts, isLoading } = useQuery({
     queryKey: ['discounts', page, limit, search, statusFilter],
     queryFn: async () => {
-      const res = await api.get('/discounts', { params: { page, limit, search, status: statusFilter || undefined } });
+      const res = await getDiscounts({ page, limit, search, status: statusFilter || undefined });
       return res.data;
     },
   });
@@ -94,14 +94,14 @@ export default function DiscountsPage() {
   const { data: stats } = useQuery({
     queryKey: ['discount-stats'],
     queryFn: async () => {
-      const res = await api.get('/discounts/stats');
+      const res = await getDiscountStats();
       return res.data as DiscountStats;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateDiscountData) => {
-      const res = await api.post('/discounts', data);
+      const res = await createDiscount(data);
       return res.data;
     },
     onSuccess: () => {
@@ -119,7 +119,7 @@ export default function DiscountsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: CreateDiscountData }) => {
-      const res = await api.put(`/discounts/${id}`, data);
+      const res = await updateDiscount(id, data);
       return res.data;
     },
     onSuccess: () => {
@@ -137,7 +137,7 @@ export default function DiscountsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/discounts/${id}`);
+      await deleteDiscount(id);
     },
     onSuccess: () => {
       toast.success('کد تخفیف با موفقیت حذف شد');

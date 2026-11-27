@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { api } from '../../services/api';
+import { getNotifications, markNotificationRead } from '../../features/notifications/api';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import AccessDenied from '../../components/layout/AccessDenied';
@@ -93,7 +93,7 @@ export default function NotificationsPage() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const res = await api.get('/notifications');
+      const res = await getNotifications();
       return res.data;
     },
   });
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
 
   const markRead = useMutation({
     mutationFn: async (id: string) => {
-      await api.put(`/notifications/${id}/read`);
+      await markNotificationRead(id);
       return id;
     },
     onMutate: async (id) => {
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
   const markAllRead = useMutation({
     mutationFn: async () => {
       const ids = notifications.filter((n) => !n.read).map((n) => n.id);
-      await Promise.all(ids.map((id) => api.put(`/notifications/${id}/read`)));
+      await Promise.all(ids.map((id) => markNotificationRead(id)));
       return ids.length;
     },
     onMutate: async () => {

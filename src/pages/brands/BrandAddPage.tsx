@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
+import { createBrand } from '../../features/brands/api';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
@@ -45,7 +45,7 @@ export default function BrandAddPage() {
 
   const createBrandMutation = useMutation({
     mutationFn: async (data: BrandFormData) => {
-      const res = await api.post('/brands', {
+      const res = await createBrand({
         ...data,
         logo: logoPreview || data.logo,
       });
