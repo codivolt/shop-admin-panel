@@ -30,7 +30,9 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-4">
       <div
         className="fixed inset-0 bg-[var(--overlay)] backdrop-blur-md transition-opacity duration-200"
-        onClick={onClose}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       />
       <div
         className={`relative z-10 w-full transform opacity-0 transition-all duration-300 ${sizeMap[size]} ${className || ''}`}

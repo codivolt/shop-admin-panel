@@ -11,6 +11,8 @@ import PageHeader from '../../components/layout/PageHeader';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 import Input from '../../components/input/Input';
+import AmountInput from '../../components/input/AmountInput';
+import JalaliDatePicker from '../../components/input/JalaliDatePicker';
 import Select from '../../components/form/Select';
 
 interface DiscountCode {
@@ -528,19 +530,17 @@ export default function DiscountsPage() {
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input
+            <AmountInput
               name="minOrderAmount"
               label="حداقل مبلغ سفارش (تومان)"
-              type="number"
-              value={String(form.minOrderAmount || '')}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, minOrderAmount: parseInt(e.target.value) || 0 })}
+              value={form.minOrderAmount}
+              onChange={(value) => setForm({ ...form, minOrderAmount: value })}
             />
-            <Input
+            <AmountInput
               name="maxDiscountAmount"
               label="حداکثر مبلغ تخفیف (برای درصدی) (تومان)"
-              type="number"
-              value={String(form.maxDiscountAmount || '')}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, maxDiscountAmount: parseInt(e.target.value) || 0 })}
+              value={form.maxDiscountAmount}
+              onChange={(value) => setForm({ ...form, maxDiscountAmount: value })}
             />
           </div>
 
@@ -552,12 +552,10 @@ export default function DiscountsPage() {
               value={String(form.usageLimit || '')}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, usageLimit: parseInt(e.target.value) || 0 })}
             />
-            <Input
-              name="expiresAt"
+            <JalaliDatePicker
               label="تاریخ انقضا"
-              type="date"
               value={form.expiresAt}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, expiresAt: e.target.value })}
+              onChange={(value) => setForm({ ...form, expiresAt: value })}
             />
           </div>
 

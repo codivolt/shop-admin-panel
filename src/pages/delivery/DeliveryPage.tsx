@@ -8,6 +8,7 @@ import DataTable, { type Column } from '../../components/table/DataTable';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import Modal from '../../components/layout/Modal';
+import AmountInput from '../../components/input/AmountInput';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
@@ -398,16 +399,11 @@ export default function DeliveryPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-fg">قیمت (تومان)</label>
-            <input
-              type="number"
-              placeholder="0"
+            <AmountInput
+              label="قیمت (تومان)"
               value={formData.price}
-              onChange={(e) =>
-                setFormData({ ...formData, price: e.target.value })
-              }
-              required
-              className="w-full rounded-xl border bg-surface-2 px-3.5 py-2.5 text-sm text-fg outline-none transition-all focus:border-primary focus:shadow-[0_0_0_3px_var(--ring-primary)]"
+              onChange={(value) => setFormData({ ...formData, price: String(value) })}
+              placeholder="0"
             />
           </div>
           <div className="space-y-2">

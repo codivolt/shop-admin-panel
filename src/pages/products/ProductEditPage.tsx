@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import Input from '../../components/input/Input';
+import AmountInput from '../../components/input/AmountInput';
 import Button from '../../components/button/Button';
 import Card from '../../components/layout/Card';
 import CustomSelect from '../../components/form/CustomSelect';
@@ -173,6 +175,7 @@ export default function ProductEditPage() {
     setValue,
     watch,
     getValues,
+    control,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -637,15 +640,19 @@ export default function ProductEditPage() {
               />
             </div>
             <div className="space-y-2">
-              <Input
+              <Controller
+                control={control}
                 name="price"
-                label="قیمت (تومان) *"
-                type="number"
-                required
-                methods={{
-                  register,
-                  formState: { errors },
-                } as any}
+                render={({ field, fieldState }) => (
+                  <AmountInput
+                    name="price"
+                    label="قیمت (تومان) *"
+                    required
+                    value={field.value as number}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                )}
               />
             </div>
             <div className="space-y-2">

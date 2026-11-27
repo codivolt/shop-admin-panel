@@ -37,6 +37,9 @@ export function useLogin(onSuccess?: () => void) {
       onSuccess?.();
     },
     onError: (err: any) => {
+      if (!err.response) {
+        return;
+      }
       toast.error(err.response?.data?.message || 'شماره موبایل یا رمز عبور اشتباه است');
     },
   });

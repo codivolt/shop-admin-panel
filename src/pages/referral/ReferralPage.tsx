@@ -11,6 +11,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 import Input from '../../components/input/Input';
+import AmountInput from '../../components/input/AmountInput';
 
 interface ReferralStat {
   totalUsers: number;
@@ -465,12 +466,11 @@ export default function ReferralPage() {
               value={String(tierForm.discountPercent || 0)}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTierForm({ ...tierForm, discountPercent: parseInt(e.target.value) || 0 })}
             />
-            <Input
+            <AmountInput
               name="tier-discount-amount"
               label="مبلغ تخفیف ثابت (تومان)"
-              type="number"
-              value={String(tierForm.discountAmount || 0)}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTierForm({ ...tierForm, discountAmount: parseInt(e.target.value) || 0 })}
+              value={tierForm.discountAmount}
+              onChange={(value) => setTierForm({ ...tierForm, discountAmount: value })}
             />
           </div>
 

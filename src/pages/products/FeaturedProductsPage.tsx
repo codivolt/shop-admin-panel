@@ -11,6 +11,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 import Input from '../../components/input/Input';
+import AmountInput from '../../components/input/AmountInput';
 import Select from '../../components/form/Select';
 import { useNavigate } from 'react-router-dom';
 
@@ -497,13 +498,11 @@ export default function FeaturedProductsPage() {
             </Select>
           </div>
 
-          <Input
+          <AmountInput
             name="price"
             label="قیمت (تومان) *"
-            type="number"
-            min="0"
-            value={String(form.price || 0)}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+            value={form.price}
+            onChange={(value) => setForm({ ...form, price: value })}
             required
           />
 
