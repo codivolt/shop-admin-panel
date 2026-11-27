@@ -26,9 +26,6 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      react-date-object:
-        specifier: ^2.1.9
-        version: 2.1.9
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
@@ -38,9 +35,6 @@ importers:
       react-hot-toast:
         specifier: ^2.6.1
         version: 2.6.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-multi-date-picker:
-        specifier: ^4.5.2
-        version: 4.5.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-redux:
         specifier: ^9.3.1
         version: 9.3.1(@types/react@18.3.31)(react@18.3.1)(redux@5.0.1)
@@ -2316,19 +2310,10 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
-  react-date-object@2.1.9:
-    resolution: {integrity: sha512-BHxD/quWOTo9fLKV/cfL/M31ePoj4a1JaJ/CnOf8Ndg3mrkh4x9wEMMkCfTrzduxDOgU8ZgR8uarhqI5G71sTg==}
-
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
     peerDependencies:
       react: ^18.3.1
-
-  react-element-popper@2.1.7:
-    resolution: {integrity: sha512-tuM2OxKlW32h+6uFSK6EENHPeZ2OGgOipHfOAl+VLWEv9/j3QkSGbD+ADX3A9uJlmq24i37n28RjJmAbGTfpEg==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
 
   react-hook-form@7.92.0:
     resolution: {integrity: sha512-O5ILyY5fYHN7N13Pfxpe55KboyNFsJdM03BHpshQkClJd8raugiAUGY7VjifITrfhVxyx81ko25azXCoayhf1w==}
@@ -2353,12 +2338,6 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
-
-  react-multi-date-picker@4.5.2:
-    resolution: {integrity: sha512-FgWjZB3Z6IA6XpcWiLPk85PwcRUhOiYhKK42o5k672gD/n2I6rzPfQ8bUrldOIiF/Z7FfOCdH7a6FeubzqteLg==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
 
   react-redux@9.3.1:
     resolution: {integrity: sha512-vxMLT0lalUjbZPkoTepWyKAZbjIIFssNx/CEL9lTfwQBU6XpkGSmCNdcCIrkOBUgB68uftZMnbXVb6DwGnhRKQ==}
@@ -5140,18 +5119,11 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
-  react-date-object@2.1.9: {}
-
   react-dom@18.3.1(react@18.3.1):
     dependencies:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
-
-  react-element-popper@2.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
 
   react-hook-form@7.92.0(@types/react@18.3.31)(react@18.3.1):
     dependencies:
@@ -5168,13 +5140,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)
-
-  react-multi-date-picker@4.5.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      react-date-object: 2.1.9
-      react-dom: 18.3.1(react@18.3.1)
-      react-element-popper: 2.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   react-redux@9.3.1(@types/react@18.3.31)(react@18.3.1)(redux@5.0.1):
     dependencies:

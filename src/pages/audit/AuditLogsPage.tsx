@@ -6,6 +6,7 @@ import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
+import { formatDateTime } from '../../lib/format';
 
 interface AuditLog {
   id: string;
@@ -109,7 +110,7 @@ export default function AuditLogsPage() {
       width: '18%',
       render: (value: string) => (
         <span className="text-[11px] text-muted">
-          {new Date(value).toLocaleString('fa-IR')}
+          {formatDateTime(value)}
         </span>
       ),
     },

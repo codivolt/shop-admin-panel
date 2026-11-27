@@ -1,5 +1,4 @@
-import type { UseFormReturn } from 'react-hook-form';
-import { FormProvider as RHFForm } from 'react-hook-form';
+import { FormProvider as RHFForm, type UseFormReturn } from 'react-hook-form';
 
 export type FormProps = {
   onSubmit?: (e: React.FormEvent) => void;

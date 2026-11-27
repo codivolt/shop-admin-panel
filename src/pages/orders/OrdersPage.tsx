@@ -4,8 +4,10 @@ import { api } from '../../services/api';
 import Button from '../../components/button/Button';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
+import StatGrid from '../../components/stats/StatGrid';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
+import AccessDenied from '../../components/layout/AccessDenied';
 import OrderDetailModal from '../../components/orders/OrderDetailModal';
 import CustomSelect from '../../components/form/CustomSelect';
 import Input from '../../components/input/Input';
@@ -232,7 +234,7 @@ export default function OrdersPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <StatGrid cols={3}>
         <StatCard
           label="کل سفارش‌ها"
           value={total}
@@ -267,7 +269,7 @@ export default function OrdersPage() {
             </svg>
           }
         />
-      </div>
+      </StatGrid>
 
       {/* Filters */}
       <div className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -332,16 +334,7 @@ export default function OrdersPage() {
 
       {/* Table */}
       {!canViewOrder ? (
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-card-from to-card-to p-8 text-center shadow-xl shadow-black/10">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-muted mx-auto mb-4">
-            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M15 12a3 3 0 11-6 0" />
-            </svg>
-          </div>
-          <p className="text-lg font-semibold text-fg">عدم دسترسی به مشاهده سفارشات</p>
-          <p className="mt-1 text-sm text-muted-soft">شما دسترسی مشاهده لیست سفارشات را ندارید.</p>
-        </div>
+        <AccessDenied resource="سفارشات" />
       ) : (
         <DataTable<Order>
           columns={columns}

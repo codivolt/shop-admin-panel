@@ -506,3 +506,52 @@ aside[class*="sidebar"]::-webkit-scrollbar-corner,
   width: 100%;
   object-fit: cover;
 }
+
+/* Mobile bottom-sheet modal */
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 639px) {
+  .modal-panel {
+    animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+  .modal-panel.modal-closing {
+    animation: sheetDown 0.28s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .modal-panel.modal-closing {
+    animation: popOut 0.2s ease-in forwards !important;
+  }
+}
+
+@keyframes sheetDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+}
+
+@keyframes popOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

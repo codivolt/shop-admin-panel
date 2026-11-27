@@ -55,12 +55,9 @@ export const PAYMENT_STATUS: Record<PaymentStatus, StatusConfig> = {
   refunded: { label: 'بازگشت وجه', cls: 'bg-surface-2 text-muted', dot: 'bg-muted' },
 };
 
-export const formatCurrency = (value: number) => `${Number(value || 0).toLocaleString('fa-IR')} تومان`;
+export { formatCurrency, formatDate as formatOrderDate } from '../../lib/format';
 
 export const shortOrderId = (id: string) => id.slice(0, 8).toUpperCase();
-
-export const formatOrderDate = (value: string) =>
-  new Date(value).toLocaleDateString('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' });
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   const config = ORDER_STATUS[status] ?? ORDER_STATUS.pending;

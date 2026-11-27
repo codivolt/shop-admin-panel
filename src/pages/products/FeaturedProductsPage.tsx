@@ -5,6 +5,7 @@ import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
+import StatGrid from '../../components/stats/StatGrid';
 import Modal from '../../components/layout/Modal';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
@@ -378,7 +379,7 @@ export default function FeaturedProductsPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <StatGrid cols={4}>
         <StatCard
           label="کل محصولات"
           value={products?.total ?? 0}
@@ -426,7 +427,7 @@ export default function FeaturedProductsPage() {
             </svg>
           }
         />
-      </div>
+      </StatGrid>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">

@@ -6,6 +6,7 @@ import Card from '../../components/layout/Card';
 import toast from 'react-hot-toast';
 
 import Breadcrumb from '../../components/layout/Breadcrumb';
+import { formatDate } from '../../lib/format';
 interface User {
   id: string;
   email: string;
@@ -161,7 +162,7 @@ export default function UserProfilePage() {
             <div className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-border">
               <div>
                 <p className="text-muted text-sm font-medium">تاریخ عضویت</p>
-                <p className="text-fg font-bold">{new Date(user.createdAt).toLocaleDateString('fa-IR')}</p>
+                <p className="text-fg font-bold">{formatDate(user.createdAt)}</p>
               </div>
               <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -170,7 +171,7 @@ export default function UserProfilePage() {
             <div className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-border">
               <div>
                 <p className="text-muted text-sm font-medium">آخرین بروزرسانی</p>
-                <p className="text-fg font-bold">{new Date(user.updatedAt).toLocaleDateString('fa-IR')}</p>
+                <p className="text-fg font-bold">{formatDate(user.updatedAt)}</p>
               </div>
               <span className="text-muted text-sm">↻</span>
             </div>

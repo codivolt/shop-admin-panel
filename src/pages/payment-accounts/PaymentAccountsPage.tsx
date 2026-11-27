@@ -7,6 +7,7 @@ import DataTable, { type Column } from '../../components/table/DataTable';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
 import Modal from '../../components/layout/Modal';
+import StatGrid from '../../components/stats/StatGrid';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
@@ -357,7 +358,7 @@ export default function PaymentAccountsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <StatGrid cols={3}>
         <div className="card-elevated p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -403,7 +404,7 @@ export default function PaymentAccountsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </StatGrid>
 
       <DataTable<PaymentAccount>
         columns={columns}

@@ -5,6 +5,7 @@ import Button from '../../components/button/Button';
 import toast from 'react-hot-toast';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
+import StatGrid from '../../components/stats/StatGrid';
 import Modal from '../../components/layout/Modal';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
@@ -310,7 +311,7 @@ export default function ReferralPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <StatGrid cols={4}>
         <StatCard
           label="کل کاربران"
           value={stats?.totalUsers ?? 0}
@@ -356,7 +357,7 @@ export default function ReferralPage() {
             </svg>
           }
         />
-      </div>
+      </StatGrid>
 
       {/* Top Referrers */}
       {stats && stats.topReferrers && stats.topReferrers.length > 0 && (

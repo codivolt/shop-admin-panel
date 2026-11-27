@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 export type ModalProps = {
   open: boolean;
@@ -10,10 +10,10 @@ export type ModalProps = {
 };
 
 const sizeMap: Record<string, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-lg',
+  xl: 'sm:max-w-xl',
 };
 
 export default function Modal({
@@ -24,21 +24,46 @@ export default function Modal({
   className,
   size = 'md',
 }: ModalProps) {
-  if (!open) return null;
+  const [visible, setVisible] = useState(open);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (open) {
+      setVisible(true);
+      setClosing(false);
+    } else if (visible) {
+      setClosing(true);
+      timer = setTimeout(() => {
+        setVisible(false);
+        setClosing(false);
+      }, 300);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <div
-        className="fixed inset-0 bg-[var(--overlay)] backdrop-blur-md transition-opacity duration-200"
+        className={`fixed inset-0 bg-[var(--overlay)] backdrop-blur-md transition-opacity duration-300 ${
+          closing ? 'opacity-0' : 'opacity-100'
+        }`}
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       />
       <div
-        className={`relative z-10 w-full transform opacity-0 transition-all duration-300 ${sizeMap[size]} ${className || ''}`}
+        className={`modal-panel relative z-10 w-full transform opacity-0 transition-all duration-300 ${sizeMap[size]} ${
+          closing ? 'modal-closing' : ''
+        } ${className || ''}`}
         style={{ animation: 'popIn 0.2s ease-out forwards' }}
       >
-        <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl sm:max-h-[calc(100dvh-3rem)]">
+        <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-t-2xl border border-border bg-surface shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl">
           {title && (
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-6 sm:py-4">
               <h2 className="truncate text-base font-bold tracking-tight text-fg sm:text-lg">

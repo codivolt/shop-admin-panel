@@ -6,9 +6,11 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import DataTable, { type Column } from '../../components/table/DataTable';
 import StatCard from '../../components/stats/StatCard';
+import StatGrid from '../../components/stats/StatGrid';
 import Modal from '../../components/layout/Modal';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
+import AccessDenied from '../../components/layout/AccessDenied';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
@@ -212,7 +214,7 @@ export default function CategoriesPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <StatGrid cols={3}>
         <StatCard
           label="کل دسته‌بندی‌ها"
           value={total}
@@ -246,20 +248,11 @@ export default function CategoriesPage() {
             </svg>
           }
         />
-      </div>
+      </StatGrid>
 
       {/* Table */}
       {!canView ? (
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-card-from to-card-to p-8 text-center shadow-xl shadow-black/10">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-muted mx-auto mb-4">
-            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M15 12a3 3 0 11-6 0" />
-            </svg>
-          </div>
-          <p className="text-lg font-semibold text-fg">عدم دسترسی به مشاهده دسته‌بندی‌ها</p>
-          <p className="mt-1 text-sm text-muted-soft">شما دسترسی مشاهده لیست دسته‌بندی‌ها را ندارید.</p>
-        </div>
+        <AccessDenied resource="دسته‌بندی‌ها" />
       ) : (
         <DataTable<Category>
           columns={columns}

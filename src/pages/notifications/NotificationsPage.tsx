@@ -4,11 +4,11 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import Breadcrumb from '../../components/layout/Breadcrumb';
 import PageHeader from '../../components/layout/PageHeader';
+import AccessDenied from '../../components/layout/AccessDenied';
 import Button from '../../components/button/Button';
 import StatCard from '../../components/stats/StatCard';
 import OrderDetailModal from '../../components/orders/OrderDetailModal';
-import { shortOrderId } from '../../components/orders/OrderMeta';
-import type { Order } from '../../components/orders/OrderMeta';
+import { shortOrderId, type Order } from '../../components/orders/OrderMeta';
 import { useAppSelector } from '../../hooks/useRedux';
 import { PERMISSIONS } from '../../constants';
 
@@ -224,16 +224,7 @@ export default function NotificationsPage() {
   return (
     <>
       {!canViewNotification ? (
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-card-from to-card-to p-8 text-center shadow-xl shadow-black/10 animate-fade-in">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-muted mx-auto mb-4">
-            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M15 12a3 3 0 11-6 0" />
-            </svg>
-          </div>
-          <p className="text-lg font-semibold text-fg">عدم دسترسی به مشاهده اعلان‌ها</p>
-          <p className="mt-1 text-sm text-muted-soft">شما دسترسی مشاهده لیست اعلان‌ها را ندارید.</p>
-        </div>
+        <AccessDenied resource="اعلان‌ها" />
       ) : (
       <div className="space-y-4 animate-fade-in">
       <PageHeader
