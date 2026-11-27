@@ -273,7 +273,7 @@ html {
 
 /* Header / Sidebar modern refinement */
 .header {
-  @apply sticky top-0 z-30 w-full;
+  @apply sticky top-0 z-30 w-full bg-bg;
 }
 .header-glow {
   @apply absolute inset-0 -z-10 overflow-hidden;

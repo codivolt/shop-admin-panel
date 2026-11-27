@@ -95,9 +95,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       />
 
       <aside
-        className={`sidebar translate-x-0 sidebar-enter`}
-        style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
-        aria-hidden={!open}
+        className={`sidebar ${open ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0`}
       >
         <div className="splash-rule absolute inset-x-0 top-0 z-10" />
 
